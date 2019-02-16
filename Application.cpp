@@ -112,11 +112,6 @@ int main(int argc, char **argv)
 	printf("a:     toggle the animation on/off\n");
 	printf("q:     quit\n\n");
 
-	Simulation sim;
-	Visualization vis;
-	Application app = Application(vis);
-
-
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitWindowSize(500,500);
