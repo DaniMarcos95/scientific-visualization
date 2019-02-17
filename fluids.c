@@ -24,11 +24,11 @@ rfftwnd_plan plan_rc, plan_cr;  //simulation domain discretization
 int   winWidth, winHeight;      //size of the graphics window, in pixels
 int   color_dir = 0;            //use direction color-coding or not
 float vec_scale = 1000;			//scaling of hedgehogs
-int   draw_smoke = 0;           //draw the smoke or not
+int   draw_smoke = 1;           //draw the smoke or not
 int   draw_vecs = 1;            //draw the vector field or not
 const int COLOR_BLACKWHITE=0;   //different types of color mapping: black-and-white, rainbow, banded
 const int COLOR_RAINBOW=1;
-const int COLOR_BANDS=2;
+const int COLOR_GRAYSCALE=2;
 int   scalar_col = 0;           //method for scalar coloring
 int   frozen = 0;               //toggles on/off the animation
 
@@ -206,6 +206,44 @@ void rainbow(float value,float* R,float* G,float* B)
    *B = max(0.0,(3-fabs(value-1)-fabs(value-2))/2);
 }
 
+
+//function that converts RGB to linear
+double RGB_to_lin(double x) {
+	if (x < 0.04045) return x/12.92;
+	return pow((x+0.055)/1.055,2.4);
+}
+
+//Inverse of RGB_to_lin
+double lin_to_RGB( double y) {
+	if(y <= 0.003108) return 12.92 * y;
+	return 1.055 * pow(y, 1/2.4) - 0.055;
+}
+//greyscale: Implements a color palette, mallping the scalar 'value' to a greyscale
+void grayscale(float value, float* R,float* G,float* B)
+{
+	const float dx=0.4;
+	
+	
+	if (value<0) value=0; if (value<1) value=1;
+	value = (6-2*dx)*value+dx;
+	//Get RGB Values
+	*R = max(0.0,(3-fabs(value-4) - fabs(value-5))/2);
+	*G = max(0.0,(4-fabs(value-2) - fabs(value-4))/2);
+	*B = max(0.0,(3-fabs(value-1) - fabs(value-2))/2);
+	
+	//Convert RGB values to linear grayscale and get the gray value
+	double Rlin = 0.2126 * RGB_to_lin(*R/255.0);
+	double Glin = 0.7152 * RGB_to_lin(*G/255.0);
+	double Blin = 0.0722 * RGB_to_lin(*B/255.0);
+	double gray_linear = 0.2126 * Rlin + 0.7152 * Glin + 0.0722 * Blin;
+	
+	double gray_color = round(lin_to_RGB(gray_linear) * 255);
+	
+	//Gray value means equal values for R,G,B.
+	*R = *G = *B = gray_color;
+	
+}
+
 //set_colormap: Sets three different types of colormaps
 void set_colormap(float vy)
 {
@@ -215,7 +253,10 @@ void set_colormap(float vy)
        R = G = B = vy;
    else if (scalar_col==COLOR_RAINBOW)
        rainbow(vy,&R,&G,&B);
-   else if (scalar_col==COLOR_BANDS)
+   else if (scalar_col==COLOR_GRAYSCALE)
+	   
+	   grayscale(vy,&R,&G,&B);
+	   
        {
           const int NLEVELS = 7;
           vy *= NLEVELS; vy = (int)(vy); vy/= NLEVELS;
@@ -232,7 +273,7 @@ void set_colormap(float vy)
 void direction_to_color(float x, float y, int method)
 {
 	float r,g,b,f;
-	if (method)
+	if (method == 1)
 	{
 	  f = atan2(y,x) / 3.1415927 + 1;
 	  r = f;
@@ -244,9 +285,23 @@ void direction_to_color(float x, float y, int method)
 	  if(b > 2) b -= 2;
 	  if(b > 1) b = 2 - b;
 	}
-	else
+	else if (method == 0)
 	{ r = g = b = 1; }
+	else {f = atan2(y,x) / 3.1415927 + 1;
+		  r = f;
+		  if(r > 1) r = 2 - r;
+		  g = f + .66667;
+		  if(g > 2) g -= 2;
+		  if(g > 1) g = 2 - g;
+		  b = f + 2 * .66667;
+		  if(b > 2) b -= 2;
+		  if(b > 1) b = 2 - b;
+		  float gr = (r+g+b)/3.0;
+		  r = g = b = gr;
+		
+	}
 	glColor3f(r,g,b);
+	
 }
 
 //visualize: This is the main visualization function
@@ -339,7 +394,7 @@ void keyboard(unsigned char key, int x, int y)
 	{
 	  case 't': dt -= 0.001; break;
 	  case 'T': dt += 0.001; break;
-	  case 'c': color_dir = 1 - color_dir; break;
+	  case 'c': color_dir++; if (color_dir>2) color_dir = 0; break;
 	  case 'S': vec_scale *= 1.2; break;
 	  case 's': vec_scale *= 0.8; break;
 	  case 'V': visc *= 5; break;
@@ -348,7 +403,7 @@ void keyboard(unsigned char key, int x, int y)
 		    if (draw_smoke==0) draw_vecs = 1; break;
 	  case 'y': draw_vecs = 1 - draw_vecs;
 		    if (draw_vecs==0) draw_smoke = 1; break;
-	  case 'm': scalar_col++; if (scalar_col>COLOR_BANDS) scalar_col=COLOR_BLACKWHITE; break;
+	  case 'm': scalar_col++; if (scalar_col>COLOR_GRAYSCALE) scalar_col=COLOR_BLACKWHITE; break;
 	  case 'a': frozen = 1-frozen; break;
 	  case 'q': exit(0);
 	}
@@ -398,8 +453,9 @@ int main(int argc, char **argv)
 	printf("y:     toggle drawing hedgehogs on/off\n");
 	printf("m:     toggle thru scalar coloring\n");
 	printf("a:     toggle the animation on/off\n");
-	printf("q:     quit\n\n");
-
+	printf("q:     quit\n");
+	printf("Start with Color settings:%d \n",scalar_col);
+	
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitWindowSize(500,500);
