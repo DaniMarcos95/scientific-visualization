@@ -1,5 +1,5 @@
-OBJECTS     = Simulation.cpp Visualization.cpp Application.cpp
-CFILES      = $(OBJECTS:.o=.cpp)
+OBJECTS     = fluids.o
+CFILES      = $(OBJECTS:.o=.c)
 EXECFILE    = smoke
 INCLUDEDIRS = -I./fftw-2.1.5/include/
 LIBDIRS     = -L./fftw-2.1.5/lib/
@@ -16,4 +16,16 @@ LINKFLAGS   = -no-pie
 all: $(EXECFILE)
 
 $(EXECFILE): $(OBJECTS)
-		g++ $(CFLAGS) $(LINKFLAGS) $(OBJECTS) -o $(EXECFILE) $(LIBDIRS) $(LIBS) 
+		cc $(LINKFLAGS) $(OBJECTS) -o $(EXECFILE) $(LIBDIRS) $(LIBS) 
+
+.c.o: $$@.c $$@.h
+		cc $(CFLAGS) $(INCLUDEDIRS) -c $<
+
+clean:
+		-rm -rf $(OBJECTS) $(EXECFILE)
+
+depend:
+		g++ -MM $(CFILES) > make.dep
+
+-include make.dep
+

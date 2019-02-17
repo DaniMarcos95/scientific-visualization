@@ -2,22 +2,24 @@
 #include <stdio.h>              //for printing the help text
 #include <math.h>               //for various math functions
 #include <GL/glut.h>            //the GLUT graphics library
-#include <Visualization.h>
-#include <Simulation.h>
+#include "Visualization.h"
+#include "Simulation.h"
+
+using namespace std;
 
 extern int   winWidth, winHeight;      
 extern int   color_dir;           
 extern float vec_scale;			
 extern int   draw_smoke;           
 extern int   draw_vecs;            
-extern const int COLOR_BLACKWHITE;   
-extern const int COLOR_RAINBOW;
-extern const int COLOR_BANDS;
+const int COLOR_BLACKWHITE = 0;   
+const int COLOR_RAINBOW = 1;
+const int COLOR_GRAYSCALE = 2;
 extern int   scalar_col;           
 extern int   frozen;
 extern double dt;	
 extern float visc;               
-extern const int DIM;
+const int DIM = 50;
 extern fftw_real *fx, *fy; 
 extern fftw_real *rho;
 
@@ -49,7 +51,7 @@ void keyboard(unsigned char key, int x, int y)
 	{
 	  case 't': dt -= 0.001; break;
 	  case 'T': dt += 0.001; break;
-	  case 'c': color_dir = 1 - color_dir; break;
+	  case 'c': color_dir++; if (color_dir>2) color_dir = 0; break;
 	  case 'S': vec_scale *= 1.2; break;
 	  case 's': vec_scale *= 0.8; break;
 	  case 'V': visc *= 5; break;
@@ -60,7 +62,7 @@ void keyboard(unsigned char key, int x, int y)
 	  case 'y': draw_vecs = 1 - draw_vecs;
 		    if (draw_vecs==0) draw_smoke = 1; 
 		    break;
-	  case 'm': scalar_col++; if (scalar_col>COLOR_BANDS) scalar_col=COLOR_BLACKWHITE; break;
+	  case 'm': scalar_col++; if (scalar_col>COLOR_GRAYSCALE) scalar_col=COLOR_BLACKWHITE; break;
 	  case 'a': frozen = 1-frozen; break;
 	  case 'q': exit(0);
 	}
@@ -95,10 +97,6 @@ void drag(int mx, int my)
 	lmx = mx; lmy = my;
 }
 
-
-
-
-
 int main(int argc, char **argv)
 {
 	printf("Fluid Flow Simulation and Visualization\n");
@@ -113,6 +111,7 @@ int main(int argc, char **argv)
 	printf("m:     toggle thru scalar coloring\n");
 	printf("a:     toggle the animation on/off\n");
 	printf("q:     quit\n\n");
+	printf("Start with Color settings:%d \n",scalar_col);
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
