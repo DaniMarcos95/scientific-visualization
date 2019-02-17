@@ -1,6 +1,10 @@
 #include <rfftw.h>              //the numerical simulation FFTW library
 #include <stdio.h>              //for printing the help text
 #include <math.h>               //for various math functions
+#include <GL/glut.h>            //the GLUT graphics library
+
+
+extern int   frozen;
 
 class Simulation{
 
@@ -14,22 +18,21 @@ class Simulation{
 	rfftwnd_plan plan_rc, plan_cr;  //simulation domain discretization
 
 	public:
-		Simulation(int);
-		void FFT(int, void);
+		void init_simulation(int);
+		void FFT(int, void*);
 		int clamp(float);
 		float max(float, float);
 		void solve(int, fftw_real*, fftw_real*, fftw_real*, fftw_real*, fftw_real, fftw_real);
 		void diffuse_matter(int, fftw_real, fftw_real, fftw_real, fftw_real, fftw_real dt);
 		void set_forces(void);
-		void do_one_simulation_step(void);
+		void do_one_simulation_step();
 
 };
 
-Simulation::Simulation(int n){
+void Simulation::init_simulation(int n)
+{
 	int i; size_t dim;
 
-	dt = 0.4;				//simulation time step
-	visc = 0.001;
 	dim     = n * 2*(n/2+1)*sizeof(fftw_real);        //Allocate data structures
 	vx       = (fftw_real*) malloc(dim);
 	vy       = (fftw_real*) malloc(dim);
@@ -46,6 +49,7 @@ Simulation::Simulation(int n){
 	for (i = 0; i < n * n; i++)                      //Initialize data structures to 0
 	{ vx[i] = vy[i] = vx0[i] = vy0[i] = fx[i] = fy[i] = rho[i] = rho0[i] = 0.0f; }
 }
+
 
 
 //FFT: Execute the Fast Fourier Transform on the dataset 'vx'.
@@ -167,7 +171,7 @@ void Simulation::set_forces(void)
 //      - solve:            read forces from the user
 //      - diffuse_matter:   compute a new set of velocities
 //      - gluPostRedisplay: draw a new visualization frame
-void Simulation::do_one_simulation_step(void)
+void Simulation::do_one_simulation_step()
 {
 	if (!frozen)
 	{
