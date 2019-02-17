@@ -10,16 +10,16 @@ extern fftw_real *rho;
 
 class Visualization{
 
-	int   winWidth, winHeight;      //size of the graphics window, in pixels
-	int   color_dir;           //use direction color-coding or not
-	float vec_scale;			//scaling of hedgehogs
-	int   draw_smoke;           //draw the smoke or not
-	int   draw_vecs;            //draw the vector field or not
+	int   winWidth, winHeight;      //size of the graphics window, in pixels 
+	int   color_dir;           //use direction color-coding or not 
+	float vec_scale;			//scaling of hedgehogs 
+	int   draw_smoke;           //draw the smoke or not 
+	int   draw_vecs;            //draw the vector field or not 
 	const int COLOR_BLACKWHITE=0;   //different types of color mapping: black-and-white, rainbow, banded
 	const int COLOR_RAINBOW=1;
 	const int COLOR_BANDS=2;
-	int   scalar_col;           //method for scalar coloring
-	int   frozen;               //toggles on/off the animation
+	int   scalar_col;           //method for scalar coloring 
+	int   frozen;               //toggles on/off the animation 
 
 	public:
 		Visualization(int, int);
