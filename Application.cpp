@@ -15,6 +15,7 @@ extern int   draw_vecs;
 const int COLOR_BLACKWHITE = 0;   
 const int COLOR_RAINBOW = 1;
 const int COLOR_GRAYSCALE = 2;
+const int COLOR_BLUEYEL = 3;
 extern int   scalar_col;           
 extern int   frozen;
 extern double dt;	
@@ -51,18 +52,16 @@ void keyboard(unsigned char key, int x, int y)
 	{
 	  case 't': dt -= 0.001; break;
 	  case 'T': dt += 0.001; break;
-	  case 'c': color_dir++; if (color_dir>2) color_dir = 0; break;
+	  case 'c': color_dir++; if (color_dir>3) color_dir = 0; break;
 	  case 'S': vec_scale *= 1.2; break;
 	  case 's': vec_scale *= 0.8; break;
 	  case 'V': visc *= 5; break;
 	  case 'v': visc *= 0.2; break;
 	  case 'x': draw_smoke = 1 - draw_smoke;
-		    if (draw_smoke==0) draw_vecs = 1; 
-		    break;
+		    if (draw_smoke==0) draw_vecs = 1; break;
 	  case 'y': draw_vecs = 1 - draw_vecs;
-		    if (draw_vecs==0) draw_smoke = 1; 
-		    break;
-	  case 'm': scalar_col++; if (scalar_col>COLOR_GRAYSCALE) scalar_col=COLOR_BLACKWHITE; break;
+		    if (draw_vecs==0) draw_smoke = 1; break;
+	  case 'm': scalar_col++; if (scalar_col>COLOR_BLUEYEL) scalar_col=COLOR_BLACKWHITE; break;
 	  case 'a': frozen = 1-frozen; break;
 	  case 'q': exit(0);
 	}
