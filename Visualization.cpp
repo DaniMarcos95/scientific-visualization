@@ -31,6 +31,7 @@ void draw_color_legend();
 void set_colors_in_bar(int color, int x1, int x2);
 void rainbow_bar();
 void blue_to_yellow_bar();
+void grayscale_bar();
 
 //rainbow: Implements a color palette, mapping the scalar 'value' to a rainbow color RGB
 void rainbow(float value,float* R,float* G,float* B)
@@ -86,7 +87,8 @@ void grayscale(float value, float* R,float* G,float* B)
 void blue_yel(float value, float* R, float* G, float* B)
 {
    const float dx=0.8;
-   if (value<0) value=0; if (value>1) value=1;
+   if (value<0) value=0; 
+   if (value>1) value=1;
    value = (6-2*dx)*value+dx;
    *R = max(0.0,(3-fabs(value-4)-fabs(value-5))/2);
    *G = max(0.0,(4-fabs(value-2)-fabs(value-4))/2); 
@@ -253,6 +255,9 @@ void draw_color_legend(){
 	  case 2:  
 	  	blue_to_yellow_bar();
 	  	break;
+	  case 3:
+	  	grayscale_bar();
+	  	break;
 	}
 	
 	
@@ -334,6 +339,22 @@ void blue_to_yellow_bar(){
 	glVertex2f(500,0);
 	glVertex2f(500,30);
 	glColor3f(0,0.6,1); 
+	glVertex2f(0,30);
+	glEnd();
+
+}
+
+void grayscale_bar(){
+	
+		// glBegin(GL_QUAD_STRIP);
+	glBegin(GL_QUADS);
+	glShadeModel(GL_SMOOTH);
+	glColor3f(1,1,1); 
+	glVertex2f(0,0);
+	glColor3f(0,0,0); 
+	glVertex2f(500,0);
+	glVertex2f(500,30);
+	glColor3f(1,1,1); 
 	glVertex2f(0,30);
 	glEnd();
 
