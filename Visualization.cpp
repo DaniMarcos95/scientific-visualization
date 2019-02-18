@@ -26,8 +26,10 @@ void direction_to_color(float, float, int);
 double RGB_to_lin(double x);
 double lin_to_RGB( double y);
 void grayscale(float value, float* R,float* G,float* B);
-void draw_color_legend(int number_of_colors, int mode);
+void draw_color_legend();
 void set_colors_in_bar(int color, int x1, int x2);
+void rainbow_bar();
+void blue_to_yellow_bar();
 
 //rainbow: Implements a color palette, mapping the scalar 'value' to a rainbow color RGB
 void rainbow(float value,float* R,float* G,float* B)
@@ -198,7 +200,29 @@ void visualize(void)
 	  glEnd();
 	}
 
-	// glBegin(GL_QUAD_STRIP);
+	draw_color_legend();
+}
+
+void draw_color_legend(){
+	switch (color_dir)
+	{
+	  case 0:  break;
+
+	  case 1:  
+	  	rainbow_bar();
+	  	break;
+	  case 2:  
+	  	blue_to_yellow_bar();
+	  	break;
+	}
+	
+	
+	
+}
+
+void rainbow_bar(){
+	
+		// glBegin(GL_QUAD_STRIP);
 	glBegin(GL_QUADS);
 	glShadeModel(GL_SMOOTH);
 	glColor3f(0.4,0.2,1); //Purple
@@ -258,53 +282,20 @@ void visualize(void)
 	glColor3f(1,0.6,0); //Orange
 	glVertex2f(400,30);
 	glEnd();
-    
-
-	// glBegin(GL_QUADS);
-	// glShadeModel(GL_SMOOTH);
-	// // glColor3f(0,0,1);
-	// // glVertex2f(0,0); //Start point
-	// // glColor3f(1,0,0);
-	// // glVertex2f(500, 0); //Adjust temp_value between x/y depending on which direction to draw bar.
-	// // glColor3f(1,0,0);
-	// // glVertex2f(500, 30); // 5 = width of bar
-	// // glColor3f(0,0,1);
-	// // glVertex2f(0,30); // Last point on quad
-	// for (int i = 0; i < 500; i++){
-	// 	set_colors_in_bar(i, 0 + i, 0 + i+1);
-	// }
-	// glEnd();
 }
 
-void draw_color_legend(int number_of_colors, int mode){
-	switch (mode)
-	{
-	  case 0:  break;
-	  case 1:  
-	  	
-	  	break;
-	  case 2:  break;
-	}
+void blue_to_yellow_bar(){
 	
-	
-	
-}
-
-void set_colors_in_bar(int color, int x1, int x2){
+		// glBegin(GL_QUAD_STRIP);
 	glBegin(GL_QUADS);
 	glShadeModel(GL_SMOOTH);
-	glColor3f(color/500,color/500,0);
-	glVertex2f(x1,0); //Start point
-	glVertex2f(x2, 0); //Adjust temp_value between x/y depending on which direction to draw bar.
-	glVertex2f(x2, 30); // 5 = width of bar
-	glVertex2f(x1,30); // Last point on quad
+	glColor3f(0,0.6,1); 
+	glVertex2f(0,0);
+	glColor3f(1,1,0); 
+	glVertex2f(500,0);
+	glVertex2f(500,30);
+	glColor3f(0,0.6,1); 
+	glVertex2f(0,30);
 	glEnd();
-	// glColor3f(0+0.002*i,0+0.002*i,0);
-	// glBegin(GL_QUADS);
-	// glVertex2f(0,0); //Start point
-	// glVertex2f(500, 0); //Adjust temp_value between x/y depending on which direction to draw bar.
-	// glVertex2f(500, 30); // 5 = width of bar
-	// glVertex2f(0,30); // Last point on quad
-	// glEnd();
-	
+
 }
