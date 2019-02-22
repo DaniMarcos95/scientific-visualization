@@ -30,7 +30,7 @@ const int COLOR_BLACKWHITE=0;   //different types of color mapping: black-and-wh
 const int COLOR_RAINBOW=1;
 const int COLOR_GRAYSCALE=2;
 const int COLOR_BLUEYEL = 3;
-int   scalar_col = 0;           //method for scalar coloring
+int   scalar_col = 1;           //method for scalar coloring
 int   frozen = 0;               //toggles on/off the animation
 
 
@@ -74,7 +74,8 @@ int clamp(float x)
 { return ((x)>=0.0?((int)(x)):(-((int)(1-(x))))); }
 
 float max(float x, float y)
-{ return x < y ? x : y; }
+{ if (x>y) return x;
+else return y; }
 
 //solve: Solve (compute) one step of the fluid flow simulation
 void solve(int n, fftw_real* vx, fftw_real* vy, fftw_real* vx0, fftw_real* vy0, fftw_real visc, fftw_real dt)
@@ -194,8 +195,46 @@ void do_one_simulation_step(void)
 
 
 //------ VISUALIZATION CODE STARTS HERE -----------------------------------------------------------------
+//convert RGB values to HSV
+void rgb2hsv(float r, float g, float b,
+			float& h, float& s, float& v)
+{
+	float M = max(r,max(g,b));
+	float m = min(r,min(g,b));
+	float d = M-m;
+	v = M;
+	s = (M>0.00001)? d/M:0; //saturation
+	if (s==0) h = 0;
+	else
+	{
+		if (r==M) h = (g-b)/d;
+		else if (g==M) h = 2 + (b-r)/d;
+		else h = 4 + (r-g)/d;
+		h /= 6;
+		if (h <0) h += 1;
+	}
+	}
 
-
+// Convert from HSV to RGB
+void hsv2rgb(float h, float s, float v, float& r, float& g, float& b)
+{
+	int hueCase = (int)(h * 6);
+	float frac = 6*h-hueCase;
+	float lx = v*(1-s);
+	float ly = v*(1 - s*frac);
+	float lz = v*(1-s*(1-frac));
+	switch (hueCase)
+	{
+		case 0:
+		case 6: r=v; g=lz; b=lx; break; //0<hue<1/6
+		case 1: r=ly; g=v; b=lx; break; //1/6<hue<2/6
+		case 2: r=lx; g=v; b=lz; break; 
+		case 3: r=lx; g=ly; b=v; break;
+		case 4: r=lz; g=lx; b=v; break;
+		case 5: r=v; g=lx; b=ly; break;
+		
+	}
+}
 //rainbow: Implements a color palette, mapping the scalar 'value' to a rainbow color RGB
 void rainbow(float value,float* R,float* G,float* B)
 {
@@ -223,8 +262,8 @@ double lin_to_RGB( double y) {
 void grayscale(float value, float* R,float* G,float* B)
 {
 	const float dx=0.4;
-	
-	
+	const float gamma = 2.2;
+	float Y,L;
 	if (value<0) value=0; if (value<1) value=1;
 	value = (6-2*dx)*value+dx;
 	//Get RGB Values
@@ -233,15 +272,11 @@ void grayscale(float value, float* R,float* G,float* B)
 	*B = max(0.0,(3-fabs(value-1) - fabs(value-2))/2);
 	
 	//Convert RGB values to linear grayscale and get the gray value
-	double Rlin = 0.2126 * RGB_to_lin(*R/255.0);
-	double Glin = 0.7152 * RGB_to_lin(*G/255.0);
-	double Blin = 0.0722 * RGB_to_lin(*B/255.0);
-	double gray_linear = 0.2126 * Rlin + 0.7152 * Glin + 0.0722 * Blin;
+	Y = 0.2126 * pow(*R,gamma) + 0.7152 * pow(*G,gamma) + 0.0722 * pow(*B,gamma);
+	L = 116 * pow(Y,0.3) - 16;
+	*R = *G = *B = L;
 	
-	double gray_color = round(lin_to_RGB(gray_linear) * 255);
 	
-	//Gray value means equal values for R,G,B.
-	*R = *G = *B = gray_color;
 	
 }
 
@@ -263,19 +298,23 @@ void blue_yel(float value, float* R, float* G, float* B)
 }
 
 //set_colormap: Sets three different types of colormaps
-void set_colormap(float vy)
+void set_colormap( float value, int scalar_col)
 {
    float R,G,B;
 
-   if (scalar_col==COLOR_BLACKWHITE)
-       R = G = B = vy;
-   else if (scalar_col==COLOR_RAINBOW)
-       rainbow(vy,&R,&G,&B);
-   else if (scalar_col==COLOR_GRAYSCALE)
+   if (scalar_col==0) //WHITE
+       {R = value;
+	   G = value;
+	   B = value;}
+   else if (scalar_col==1) //RAINBOW
+       rainbow(value,&R,&G,&B);
+	   
+   else if (scalar_col==2) //blueyel
+   grayscale(value,&R,&G,&B);
       
-	   grayscale(vy,&R,&G,&B);
-	else
-		blue_yel(vy,&R,&G,&B);
+	   
+	else	//grayscale
+		blue_yel(value,&R,&G,&B);
 	   
        //{
         //  const int NLEVELS = 7;
@@ -346,7 +385,7 @@ void direction_to_color(float x, float y, int method)
 
 //visualize: This is the main visualization function
 void visualize(void)
-{
+{	
 	int        i, j, idx; double px,py;
 	fftw_real  wn = (fftw_real)winWidth / (fftw_real)(DIM + 1);   // Grid cell width
 	fftw_real  hn = (fftw_real)winHeight / (fftw_real)(DIM + 1);  // Grid cell heigh
@@ -370,19 +409,23 @@ void visualize(void)
 			px = wn + (fftw_real)i * wn;
 			py = hn + (fftw_real)(j + 1) * hn;
 			idx = ((j + 1) * DIM) + i;
-			set_colormap(rho[idx]);
+			set_colormap(rho[idx], scalar_col);
+			//direction_to_color(vx[idx],vy[idx],color_dir);
 			glVertex2f(px, py);
 			px = wn + (fftw_real)(i + 1) * wn;
 			py = hn + (fftw_real)j * hn;
 			idx = (j * DIM) + (i + 1);
-			set_colormap(rho[idx]);
+			//direction_to_color(vx[idx],vy[idx],color_dir);
+			set_colormap(rho[idx], scalar_col);
+			//printf("%f\n",rho[idx]);
 			glVertex2f(px, py);
 		}
 
 		px = wn + (fftw_real)(DIM - 1) * wn;
 		py = hn + (fftw_real)(j + 1) * hn;
 		idx = ((j + 1) * DIM) + (DIM - 1);
-		set_colormap(rho[idx]);
+		
+		set_colormap(rho[idx],scalar_col);
 		glVertex2f(px, py);
 		glEnd();
 	}
@@ -443,7 +486,7 @@ void keyboard(unsigned char key, int x, int y)
 		    if (draw_smoke==0) draw_vecs = 1; break;
 	  case 'y': draw_vecs = 1 - draw_vecs;
 		    if (draw_vecs==0) draw_smoke = 1; break;
-	  case 'm': scalar_col++; if (scalar_col>COLOR_BLUEYEL) scalar_col=COLOR_BLACKWHITE; break;
+	  case 'm': scalar_col++;  if (scalar_col>3 ) scalar_col=0;  break;
 	  case 'a': frozen = 1-frozen; break;
 	  case 'q': exit(0);
 	}
@@ -495,6 +538,7 @@ int main(int argc, char **argv)
 	printf("a:     toggle the animation on/off\n");
 	printf("q:     quit\n");
 	printf("Start with Color settings:%d \n",scalar_col);
+	
 	
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);

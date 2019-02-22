@@ -63,7 +63,7 @@ void keyboard(unsigned char key, int x, int y)
 	  case 'y': draw_vecs = 1 - draw_vecs;
 		    if (draw_vecs==0) draw_smoke = 1; 
 		    break;
-	  case 'm': scalar_col++; if (scalar_col>COLOR_BLUEYEL) scalar_col=COLOR_BLACKWHITE; break;
+	  case 'm': scalar_col++; color_dir++; if (scalar_col>COLOR_BLUEYEL && color_dir>3) {scalar_col=COLOR_BLACKWHITE; color_dir =0;} break;
 	  case 'a': frozen = 1-frozen; break;
 	  case 'q': exit(0);
 	}

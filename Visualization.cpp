@@ -32,18 +32,59 @@ void set_colors_in_bar(int color, int x1, int x2);
 void rainbow_bar();
 void blue_to_yellow_bar();
 void grayscale_bar();
+float min(float x, float y);
 
+//convert RGB values to HSV
+void rgb2hsv(float r, float g, float b,
+			float& h, float& s, float& v)
+{
+	float M = max(r,max(g,b));
+	float m = min(r,min(g,b));
+	float d = M-m;
+	v = M;
+	s = (M>0.00001)? d/M:0; //saturation
+	if (s==0) h = 0;
+	else
+	{
+		if (r==M) h = (g-b)/d;
+		else if (g==M) h = 2 + (b-r)/d;
+		else h = 4 + (r-g)/d;
+		h /= 6;
+		if (h <0) h += 1;
+	}
+	}
+
+// Convert from HSV to RGB
+void hsv2rgb(float h, float s, float v, float& r, float& g, float& b)
+{
+	int hueCase = (int)(h * 6);
+	float frac = 6*h-hueCase;
+	float lx = v*(1-s);
+	float ly = v*(1 - s*frac);
+	float lz = v*(1-s*(1-frac));
+	switch (hueCase)
+	{
+		case 0:
+		case 6: r=v; g=lz; b=lx; break; //0<hue<1/6
+		case 1: r=ly; g=v; b=lx; break; //1/6<hue<2/6
+		case 2: r=lx; g=v; b=lz; break; 
+		case 3: r=lx; g=ly; b=v; break;
+		case 4: r=lz; g=lx; b=v; break;
+		case 5: r=v; g=lx; b=ly; break;
+		
+	}
+}
 //rainbow: Implements a color palette, mapping the scalar 'value' to a rainbow color RGB
 void rainbow(float value,float* R,float* G,float* B)
 {
    const float dx=0.8;
-   if (value<0) value=0; 
-   if (value>1) value=1;
+   if (value<0) value=0; if (value>1) value=1;
    value = (6-2*dx)*value+dx;
    *R = max(0.0,(3-fabs(value-4)-fabs(value-5))/2);
    *G = max(0.0,(4-fabs(value-2)-fabs(value-4))/2);
    *B = max(0.0,(3-fabs(value-1)-fabs(value-2))/2);
 }
+
 
 //function that converts RGB to linear
 double RGB_to_lin(double x) {
@@ -59,62 +100,61 @@ double lin_to_RGB( double y) {
 //greyscale: Implements a color palette, mallping the scalar 'value' to a greyscale
 void grayscale(float value, float* R,float* G,float* B)
 {
-	const float dx=0.4;
+	//const float dx=0.8;
+	//const float gamma = 2.2;
+	//float Y,L;
+	float h,s,v;
+	if (value<0) value=0; if (value<1) value=1;
 	
-	
-	if (value<0) value=0; 
-	if (value<1) value=1;
-	value = (6-2*dx)*value+dx;
 	//Get RGB Values
-	*R = max(0.0,(3-fabs(value-4) - fabs(value-5))/2);
-	*G = max(0.0,(4-fabs(value-2) - fabs(value-4))/2);
-	*B = max(0.0,(3-fabs(value-1) - fabs(value-2))/2);
+	*R = value/3;
+	*G = value/3;
+	*B = value/3;
 	
-	//Convert RGB values to linear grayscale and get the gray value
-	double Rlin = 0.2126 * RGB_to_lin(*R/255.0);
-	double Glin = 0.7152 * RGB_to_lin(*G/255.0);
-	double Blin = 0.0722 * RGB_to_lin(*B/255.0);
-	double gray_linear = 0.2126 * Rlin + 0.7152 * Glin + 0.0722 * Blin;
+	rgb2hsv(*R,*G,*B, h,s,v);
+	s = 0;
 	
-	double gray_color = round(lin_to_RGB(gray_linear) * 255);
-	
-	//Gray value means equal values for R,G,B.
-	*R = *G = *B = gray_color;
-	
+	hsv2rgb(h,s,v,*R,*G,*B);
 }
 
 //Yellow-Blue Color Spectrum
 void blue_yel(float value, float* R, float* G, float* B)
 {
    const float dx=0.8;
-   if (value<0) value=0; 
-   if (value>1) value=1;
-   value = (6-2*dx)*value+dx;
-   *R = max(0.0,(3-fabs(value-4)-fabs(value-5))/2);
-   *G = max(0.0,(4-fabs(value-2)-fabs(value-4))/2); 
+   //value = (6-2*dx)*value+dx;
+   if (value<0) value=0; if (value>1) value=1;
+   value = 6*value; //set value to [0,6] range
    
-   *B = max(0.0,(3-fabs(value-1)-fabs(value-2))/2);
-   if (*R>0 && *B>0) 
+   
+   
+   *R = max(0.0,(3-fabs(value-6)));
+   *G = max(0.0,(6-fabs(value-3)-fabs(value-6))/2);
+   *B = max(0.0,(3-fabs(value)));
+   /*if (*B>*R && *B>*G) 
    { if (*R>*B) *B=0;
    else *R=0;}
    
-   if (*R > *G) (*R = 0);
+   if (*R > *G) (*R = *G);*/
 }
 
 //set_colormap: Sets three different types of colormaps
-void set_colormap(float vy)
+void set_colormap( float value, int scalar_col)
 {
    float R,G,B;
 
-   if (scalar_col==COLOR_BLACKWHITE)
-       R = G = B = vy;
-   else if (scalar_col==COLOR_RAINBOW)
-       rainbow(vy,&R,&G,&B);
-   else if (scalar_col==COLOR_GRAYSCALE)
+   if (scalar_col==0) //WHITE
+       {R = value;
+	   G = value;
+	   B = value;}
+   else if (scalar_col==1) //RAINBOW
+       {rainbow(value,&R,&G,&B);}
+	   
+   else if (scalar_col==2) //blueyel
+   {grayscale(value,&R,&G,&B);}
       
-	   grayscale(vy,&R,&G,&B);
-	else
-		blue_yel(vy,&R,&G,&B);
+	   
+	else	//grayscale
+		blue_yel(value,&R,&G,&B);
 	   
        //{
         //  const int NLEVELS = 7;
@@ -124,6 +164,7 @@ void set_colormap(float vy)
 
    glColor3f(R,G,B);
 }
+
 
 
 //direction_to_color: Set the current color by mapping a direction vector (x,y), using
@@ -146,7 +187,7 @@ void direction_to_color(float x, float y, int method)
 	}
 	else if (method == 0)
 	{ r = g = b = 1; }
-	else if( method == 2)
+	else if( method == 3)
 		{f = atan2(y,x) / 3.1415927 + 1;
 		r = f;
 		if (r >1 ) {r = 2 -r;}
@@ -185,7 +226,7 @@ void direction_to_color(float x, float y, int method)
 
 //visualize: This is the main visualization function
 void visualize(void)
-{
+{	
 	int        i, j, idx; double px,py;
 	fftw_real  wn = (fftw_real)winWidth / (fftw_real)(DIM + 1);   // Grid cell width
 	fftw_real  hn = (fftw_real)winHeight / (fftw_real)(DIM + 1);  // Grid cell heigh
@@ -209,19 +250,23 @@ void visualize(void)
 			px = wn + (fftw_real)i * wn;
 			py = hn + (fftw_real)(j + 1) * hn;
 			idx = ((j + 1) * DIM) + i;
-			set_colormap(rho[idx]);
+			set_colormap(rho[idx], scalar_col);
+			//direction_to_color(vx[idx],vy[idx],color_dir);
 			glVertex2f(px, py);
 			px = wn + (fftw_real)(i + 1) * wn;
 			py = hn + (fftw_real)j * hn;
 			idx = (j * DIM) + (i + 1);
-			set_colormap(rho[idx]);
+			//direction_to_color(vx[idx],vy[idx],color_dir);
+			set_colormap(rho[idx], scalar_col);
+			//printf("%f\n",rho[idx]);
 			glVertex2f(px, py);
 		}
 
 		px = wn + (fftw_real)(DIM - 1) * wn;
 		py = hn + (fftw_real)(j + 1) * hn;
 		idx = ((j + 1) * DIM) + (DIM - 1);
-		set_colormap(rho[idx]);
+		
+		set_colormap(rho[idx],scalar_col);
 		glVertex2f(px, py);
 		glEnd();
 	}
@@ -240,10 +285,8 @@ void visualize(void)
 	    }
 	  glEnd();
 	}
-
 	draw_color_legend();
 }
-
 void draw_color_legend(){
 	switch (color_dir)
 	{
@@ -252,10 +295,10 @@ void draw_color_legend(){
 	  case 1:  
 	  	rainbow_bar();
 	  	break;
-	  case 2:  
+	  case 3:  
 	  	blue_to_yellow_bar();
 	  	break;
-	  case 3:
+	  case 2:
 	  	grayscale_bar();
 	  	break;
 	}
@@ -333,7 +376,7 @@ void blue_to_yellow_bar(){
 		// glBegin(GL_QUAD_STRIP);
 	glBegin(GL_QUADS);
 	glShadeModel(GL_SMOOTH);
-	glColor3f(0,0.6,1); 
+	glColor3f(0,0.0,1); 
 	glVertex2f(0,0);
 	glColor3f(1,1,0); 
 	glVertex2f(500,0);
