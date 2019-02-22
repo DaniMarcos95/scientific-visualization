@@ -15,10 +15,10 @@ int   color_dir = 0;           //use direction color-coding or not
 float vec_scale = 1000;			//scaling of hedgehogs 
 int   draw_smoke = 0;           //draw the smoke or not 
 int   draw_vecs = 1;            //draw the vector field or not 
-const int COLOR_BLACKWHITE=0;   //different types of color mapping: black-and-white, rainbow, banded
+// const int COLOR_BLACKWHITE=0;   //different types of color mapping: black-and-white, rainbow, banded
 const int COLOR_RAINBOW=1;
-const int COLOR_GRAYSCALE=2;
-const int COLOR_BLUEYEL = 3;
+const int COLOR_GRAYSCALE=0;
+const int COLOR_BLUEYEL =2;
 int   scalar_col = 0;           //method for scalar coloring 
 int   frozen = 0;               //toggles on/off the animation 
 void rainbow(float,float*,float*,float*);
@@ -78,7 +78,8 @@ void hsv2rgb(float h, float s, float v, float& r, float& g, float& b)
 void rainbow(float value,float* R,float* G,float* B)
 {
    const float dx=0.8;
-   if (value<0) value=0; if (value>1) value=1;
+   if (value<0) value=0; 
+   if (value>1) value=1;
    value = (6-2*dx)*value+dx;
    *R = max(0.0,(3-fabs(value-4)-fabs(value-5))/2);
    *G = max(0.0,(4-fabs(value-2)-fabs(value-4))/2);
@@ -104,7 +105,8 @@ void grayscale(float value, float* R,float* G,float* B)
 	//const float gamma = 2.2;
 	//float Y,L;
 	float h,s,v;
-	if (value<0) value=0; if (value<1) value=1;
+	if (value<0) value=0; 
+	if (value<1) value=1;
 	
 	//Get RGB Values
 	*R = value/3;
@@ -122,7 +124,8 @@ void blue_yel(float value, float* R, float* G, float* B)
 {
    const float dx=0.8;
    //value = (6-2*dx)*value+dx;
-   if (value<0) value=0; if (value>1) value=1;
+   if (value<0) value=0; 
+   if (value>1) value=1;
    value = 6*value; //set value to [0,6] range
    
    
@@ -150,7 +153,10 @@ void set_colormap( float value, int scalar_col)
        {rainbow(value,&R,&G,&B);}
 	   
    else if (scalar_col==2) //blueyel
-   {grayscale(value,&R,&G,&B);}
+   {
+   	// grayscale(value,&R,&G,&B);
+   	blue_yel(value,&R,&G,&B);
+   }
       
 	   
 	else	//grayscale
@@ -187,7 +193,7 @@ void direction_to_color(float x, float y, int method)
 	}
 	else if (method == 0)
 	{ r = g = b = 1; }
-	else if( method == 3)
+	else if( method == 2)
 		{f = atan2(y,x) / 3.1415927 + 1;
 		r = f;
 		if (r >1 ) {r = 2 -r;}
@@ -290,16 +296,14 @@ void visualize(void)
 void draw_color_legend(){
 	switch (color_dir)
 	{
-	  case 0:  break;
-
+	  case 0:  
+	  	grayscale_bar();
+	  	break;
 	  case 1:  
 	  	rainbow_bar();
 	  	break;
-	  case 3:  
+	  case 2:  
 	  	blue_to_yellow_bar();
-	  	break;
-	  case 2:
-	  	grayscale_bar();
 	  	break;
 	}
 	
@@ -403,12 +407,12 @@ void grayscale_bar(){
 		// glBegin(GL_QUAD_STRIP);
 	glBegin(GL_QUADS);
 	glShadeModel(GL_SMOOTH);
-	glColor3f(1,1,1); 
-	glVertex2f(0,0);
 	glColor3f(0,0,0); 
+	glVertex2f(0,0);
+	glColor3f(1,1,1); 
 	glVertex2f(500,0);
 	glVertex2f(500,30);
-	glColor3f(1,1,1); 
+	glColor3f(0,0,0); 
 	glVertex2f(0,30);
 	glEnd();
 

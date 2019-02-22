@@ -4,6 +4,8 @@
 #include <GL/glut.h>            //the GLUT graphics library
 #include "Visualization.h"
 #include "Simulation.h"
+#include <GL/glui.h>
+
 
 using namespace std;
 
@@ -12,10 +14,10 @@ extern int   color_dir;
 extern float vec_scale;			
 extern int   draw_smoke;           
 extern int   draw_vecs;            
-const int COLOR_BLACKWHITE = 0;   
+// const int COLOR_BLACKWHITE = 0;   
 const int COLOR_RAINBOW = 1;
-const int COLOR_GRAYSCALE = 2;
-const int COLOR_BLUEYEL = 3;
+const int COLOR_GRAYSCALE = 0;
+const int COLOR_BLUEYEL = 2;
 extern int   scalar_col;           
 extern int   frozen;
 extern double dt;	
@@ -23,6 +25,13 @@ extern float visc;
 const int DIM = 50;
 extern fftw_real *fx, *fy; 
 extern fftw_real *rho;
+GLUI *glui;
+int main_window;
+// int  densityCheck  = 1;
+// int velocityCheck = 0;
+int segments = 8;
+int colorMapIndex;
+int datasetIndex;
 
 //display: Handle window redrawing events. Simply delegates to visualize().
 void display(void)
@@ -33,6 +42,39 @@ void display(void)
 	visualize();
 	glFlush();
 	glutSwapBuffers();
+
+	// if ( densityCheck ){
+ //    	draw_vecs = 0;
+	// 	draw_smoke = 1;
+	// 	velocityCheck = 0;
+ //    }
+  	
+ //  	if(velocityCheck){
+ //  		draw_vecs = 1;
+	// 	draw_smoke = 0;
+	// 	densityCheck = 0;
+ //  	}
+
+	switch(datasetIndex){
+		case 0: draw_vecs = 0;
+				draw_smoke = 1;
+				break;
+		case 1: draw_vecs = 1;
+				draw_smoke = 0;
+				break;
+	}
+
+	switch(colorMapIndex){
+		case 0: scalar_col = COLOR_GRAYSCALE;
+				color_dir = COLOR_GRAYSCALE;
+				break;
+		case 1: scalar_col = COLOR_RAINBOW;
+				color_dir = COLOR_RAINBOW;
+				break;
+		case 2: scalar_col = COLOR_BLUEYEL;
+				color_dir = COLOR_BLUEYEL;
+				break;
+	}
 }
 
 //reshape: Handle window resizing (reshaping) events
@@ -63,7 +105,7 @@ void keyboard(unsigned char key, int x, int y)
 	  case 'y': draw_vecs = 1 - draw_vecs;
 		    if (draw_vecs==0) draw_smoke = 1; 
 		    break;
-	  case 'm': scalar_col++; color_dir++; if (scalar_col>COLOR_BLUEYEL && color_dir>3) {scalar_col=COLOR_BLACKWHITE; color_dir =0;} break;
+	  case 'm': scalar_col++; color_dir++; if (scalar_col>COLOR_BLUEYEL && color_dir>3) {scalar_col=COLOR_GRAYSCALE; color_dir =0;} break;
 	  case 'a': frozen = 1-frozen; break;
 	  case 'q': exit(0);
 	}
@@ -98,6 +140,15 @@ void drag(int mx, int my)
 	lmx = mx; lmy = my;
 }
 
+void myGlutIdle( void ) {
+	glutSetWindow(main_window);
+	glutPostRedisplay();         
+}
+
+void shutDown(){
+	exit(0);
+}
+
 int main(int argc, char **argv)
 {
 	printf("Fluid Flow Simulation and Visualization\n");
@@ -117,13 +168,33 @@ int main(int argc, char **argv)
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitWindowSize(500,500);
-	glutCreateWindow("Real-time smoke simulation and visualization");
+	main_window = glutCreateWindow("Real-time smoke simulation and visualization");
 	glutDisplayFunc(display);
 	glutReshapeFunc(reshape);
 	glutIdleFunc(do_one_simulation_step);
 	glutKeyboardFunc(keyboard);
 	glutMotionFunc(drag);
 
+	
+	GLUI *glui = GLUI_Master.create_glui("");
+
+	GLUI_Panel *objectEdit = new GLUI_Panel(glui, "Configuration");
+	objectEdit->set_alignment(GLUI_ALIGN_LEFT);
+
+	//new GLUI_Checkbox( objectEdit, "Density", &densityCheck );
+	//new GLUI_Checkbox( objectEdit, "Velocity", &velocityCheck );
+	GLUI_Listbox *listboxDataset = new GLUI_Listbox(objectEdit, "Dataset: ", &datasetIndex,  12);
+	listboxDataset->set_alignment(GLUI_ALIGN_LEFT);
+	listboxDataset->add_item(0, "Density");
+	listboxDataset->add_item(1, "Velocity");
+
+	GLUI_Listbox *listboxColorMap = new GLUI_Listbox(objectEdit, "Colormap: ", &colorMapIndex,  12);
+	listboxColorMap->set_alignment(GLUI_ALIGN_LEFT);
+	listboxColorMap->add_item(0, "Grayscale");
+	listboxColorMap->add_item(1, "Rainbow");
+	listboxColorMap->add_item(2, "Blue to yellow");
+	// glui->set_main_gfx_window( main_window );
+	// GLUI_Master.set_glutIdleFunc( myGlutIdle );
 	init_simulation(DIM);	//initialize the simulation data structures
 	glutMainLoop();			//calls do_one_simulation_step, keyboard, display, drag, reshape
 	return 0;
