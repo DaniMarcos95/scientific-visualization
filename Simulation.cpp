@@ -7,7 +7,7 @@ using namespace std;
 
 extern int frozen;
 const int DIM = 50;				//size of simulation grid
-double dt = 0.4;				//simulation time step
+double dt = 0.1;				//simulation time step
 float visc;				//fluid viscosity
 fftw_real *vx, *vy;             //(vx,vy)   = velocity field at the current moment
 fftw_real *vx0, *vy0;           //(vx0,vy0) = velocity field at the previous moment
