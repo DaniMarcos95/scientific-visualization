@@ -13,7 +13,8 @@ extern int   winWidth, winHeight;
 extern int   color_dir;           
 extern float vec_scale;			
 extern int   draw_smoke;           
-extern int   draw_vecs;            
+extern int   draw_vecs;   
+extern int NCOLORS;         
 // const int COLOR_BLACKWHITE = 0;   
 const int COLOR_RAINBOW = 1;
 const int COLOR_GRAYSCALE = 0;
@@ -26,12 +27,13 @@ const int DIM = 50;
 extern fftw_real *fx, *fy; 
 extern fftw_real *rho;
 GLUI *glui;
+GLUI_Spinner *spinnerNumberColors;
 int main_window;
 // int  densityCheck  = 1;
 // int velocityCheck = 0;
-int segments = 8;
 int colorMapIndex;
 int datasetIndex;
+int numberOfColors = 255;
 
 //display: Handle window redrawing events. Simply delegates to visualize().
 void display(void)
@@ -75,6 +77,8 @@ void display(void)
 				color_dir = COLOR_BLUEYEL;
 				break;
 	}
+
+	NCOLORS = numberOfColors;
 }
 
 //reshape: Handle window resizing (reshaping) events
@@ -178,24 +182,48 @@ int main(int argc, char **argv, int NLEVELS)
 
 	
 	GLUI *glui = GLUI_Master.create_glui("");
-
-	GLUI_Panel *objectEdit = new GLUI_Panel(glui, "Configuration");
-	objectEdit->set_alignment(GLUI_ALIGN_LEFT);
-
-	//new GLUI_Checkbox( objectEdit, "Density", &densityCheck );
-	//new GLUI_Checkbox( objectEdit, "Velocity", &velocityCheck );
-	GLUI_Listbox *listboxDataset = new GLUI_Listbox(objectEdit, "Dataset: ", &datasetIndex,  12);
-	listboxDataset->set_alignment(GLUI_ALIGN_LEFT);
-	listboxDataset->add_item(0, "Density");
-	listboxDataset->add_item(1, "Velocity");
-
-	GLUI_Listbox *listboxColorMap = new GLUI_Listbox(objectEdit, "Colormap: ", &colorMapIndex,  12);
-	listboxColorMap->set_alignment(GLUI_ALIGN_LEFT);
-	listboxColorMap->add_item(0, "Grayscale");
-	listboxColorMap->add_item(1, "Rainbow");
-	listboxColorMap->add_item(2, "Blue to yellow");
+	// GLUI_Master.set_glutIdleFunc(myGlutIdle);
 	// glui->set_main_gfx_window( main_window );
-	// GLUI_Master.set_glutIdleFunc( myGlutIdle );
+
+	GLUI_Panel *mainPanel = new GLUI_Panel(glui, "Configuration");
+	mainPanel->set_alignment(GLUI_ALIGN_LEFT);
+
+	// GLUI_Listbox *listboxDataset = new GLUI_Listbox(objectEdit, "Dataset: ", &datasetIndex,  12);
+	// listboxDataset->set_alignment(GLUI_ALIGN_LEFT);
+	// listboxDataset->add_item(0, "Density");
+	// listboxDataset->add_item(1, "Velocity");
+	GLUI_Panel *datasetPanel = new GLUI_Panel(mainPanel, "Dataset");
+
+	GLUI_RadioGroup *radioDataset = new GLUI_RadioGroup(datasetPanel, &datasetIndex);
+	GLUI_RadioButton *buttonDensity = new GLUI_RadioButton( radioDataset, "Density" );
+	GLUI_RadioButton *buttonVelocity = new GLUI_RadioButton( radioDataset, "Velocity" );
+
+
+	glui->add_separator_to_panel( mainPanel );
+
+	// GLUI_Listbox *listboxColorMap = new GLUI_Listbox(objectEdit, "Colormap: ", &colorMapIndex,  12);
+	// listboxColorMap->set_alignment(GLUI_ALIGN_LEFT);
+	// listboxColorMap->add_item(0, "Grayscale");
+	// listboxColorMap->add_item(1, "Rainbow");
+	// listboxColorMap->add_item(2, "Blue to yellow");
+	GLUI_Panel *colorMapPanel = new GLUI_Panel(mainPanel, "Colormap");
+
+	GLUI_RadioGroup *radioColorMap = new GLUI_RadioGroup(colorMapPanel, &colorMapIndex);
+	GLUI_RadioButton *buttonGrayScale = new GLUI_RadioButton( radioColorMap, "GrayScale" );
+	GLUI_RadioButton *buttonRainbow = new GLUI_RadioButton( radioColorMap, "Rainbow" );
+	GLUI_RadioButton *buttonBlueToYellow = new GLUI_RadioButton( radioColorMap, "Blue To Yellow" );
+
+	glui->add_separator_to_panel( mainPanel );
+
+	GLUI_EditText *setNumberOfColors = new GLUI_EditText(mainPanel, "Number of colors(2-255):", &numberOfColors);
+	setNumberOfColors->set_int_val(255);
+	setNumberOfColors->set_int_limits( 2, 255, GLUI_LIMIT_CLAMP );
+
+	// GLUI_Spinner *spinnerNumberColors = new GLUI_Spinner( objectEdit, "Number of colors:", GLUI_EDITTEXT_INT, &numberOfColors );
+	// spinnerNumberColors->set_int_limits(2, 255);
+	// spinnerNumberColors->set_int_val(255);
+	// NCOLORS = spinnerNumberColors->get_int_val();
+	
 	init_simulation(DIM);	//initialize the simulation data structures
 	glutMainLoop();			//calls do_one_simulation_step, keyboard, display, drag, reshape
 	return 0;
