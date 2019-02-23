@@ -384,7 +384,7 @@ void blue_to_yellow_bar(){
 	glColor3f(0.2,1,0); 
 	glVertex2f(250,0);
 	glVertex2f(250,30);
-	glColor3f(0,0.6,1); 
+	glColor3f(0,0.0,1); 
 	glVertex2f(0,30);
 	glEnd();
 
