@@ -77,7 +77,7 @@ void hsv2rgb(float h, float s, float v, float& r, float& g, float& b)
 	}
 }
 
-*/ PSEUDOCODE ON CLAMPING
+// PSEUDOCODE ON CLAMPING
 
 //rainbow: Implements a color palette, mapping the scalar 'value' to a rainbow color RGB
 void rainbow(float value,float* R,float* G,float* B)
