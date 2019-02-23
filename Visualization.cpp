@@ -33,6 +33,7 @@ void rainbow_bar();
 void blue_to_yellow_bar();
 void grayscale_bar();
 float min(float x, float y);
+const float dx=0;
 int NCOLORS = 255;
 
 //convert RGB values to HSV
@@ -75,10 +76,13 @@ void hsv2rgb(float h, float s, float v, float& r, float& g, float& b)
 		
 	}
 }
+
+*/ PSEUDOCODE ON CLAMPING
+
 //rainbow: Implements a color palette, mapping the scalar 'value' to a rainbow color RGB
 void rainbow(float value,float* R,float* G,float* B)
 {
-   const float dx=0.8;
+   //const float dx=0.8;
    if (value<0) value=0; 
    if (value>1) value=1;
    value = (6-2*dx)*value+dx;
@@ -99,7 +103,7 @@ double lin_to_RGB( double y) {
 	if(y <= 0.003108) return 12.92 * y;
 	return 1.055 * pow(y, 1/2.4) - 0.055;
 }
-//greyscale: Implements a color palette, mallping the scalar 'value' to a greyscale
+/*//greyscale: Implements a color palette, mallping the scalar 'value' to a greyscale
 void grayscale(float value, float* R,float* G,float* B)
 {
 	//const float dx=0.8;
@@ -118,12 +122,12 @@ void grayscale(float value, float* R,float* G,float* B)
 	s = 0;
 	
 	hsv2rgb(h,s,v,*R,*G,*B);
-}
+}*/
 
 //Yellow-Blue Color Spectrum
 void blue_yel(float value, float* R, float* G, float* B)
 {
-   const float dx=0.8;
+   //const float dx=0.8;
    //value = (6-2*dx)*value+dx;
    if (value<0) value=0; 
    if (value>1) value=1;
