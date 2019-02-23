@@ -33,6 +33,7 @@ void rainbow_bar();
 void blue_to_yellow_bar();
 void grayscale_bar();
 float min(float x, float y);
+int NCOLORS = 255;
 
 //convert RGB values to HSV
 void rgb2hsv(float r, float g, float b,
@@ -141,23 +142,21 @@ void blue_yel(float value, float* R, float* G, float* B)
 }
 
 //set_colormap: Sets three different types of colormaps
-void set_colormap( float value, int scalar_col)
+void set_colormap( float value, int scalar_col, int NCOLORS)
 {
    float R,G,B;
-
+	
+	value *= NCOLORS;
+	value = (int)(value); 
+	value/= NCOLORS;
    if (scalar_col==0) //WHITE
        {R = value;
 	   G = value;
 	   B = value;}
    else if (scalar_col==1) //RAINBOW
-       {rainbow(value,&R,&G,&B);}
-	   
-   else if (scalar_col==2) //blueyel
-   {
-   	// grayscale(value,&R,&G,&B);
-   	blue_yel(value,&R,&G,&B);
-   }
-      
+       {
+		   
+		   rainbow(value,&R,&G,&B);}      
 	   
 	else	//grayscale
 		blue_yel(value,&R,&G,&B);
@@ -256,14 +255,14 @@ void visualize(void)
 			px = wn + (fftw_real)i * wn;
 			py = hn + (fftw_real)(j + 1) * hn;
 			idx = ((j + 1) * DIM) + i;
-			set_colormap(rho[idx], scalar_col);
+			set_colormap(rho[idx], scalar_col,NCOLORS);
 			//direction_to_color(vx[idx],vy[idx],color_dir);
 			glVertex2f(px, py);
 			px = wn + (fftw_real)(i + 1) * wn;
 			py = hn + (fftw_real)j * hn;
 			idx = (j * DIM) + (i + 1);
 			//direction_to_color(vx[idx],vy[idx],color_dir);
-			set_colormap(rho[idx], scalar_col);
+			set_colormap(rho[idx], scalar_col,NCOLORS);
 			//printf("%f\n",rho[idx]);
 			glVertex2f(px, py);
 		}
@@ -272,7 +271,7 @@ void visualize(void)
 		py = hn + (fftw_real)(j + 1) * hn;
 		idx = ((j + 1) * DIM) + (DIM - 1);
 		
-		set_colormap(rho[idx],scalar_col);
+		set_colormap(rho[idx],scalar_col,NCOLORS);
 		glVertex2f(px, py);
 		glEnd();
 	}

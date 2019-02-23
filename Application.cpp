@@ -149,7 +149,7 @@ void shutDown(){
 	exit(0);
 }
 
-int main(int argc, char **argv)
+int main(int argc, char **argv, int NLEVELS)
 {
 	printf("Fluid Flow Simulation and Visualization\n");
 	printf("=======================================\n");
@@ -163,7 +163,8 @@ int main(int argc, char **argv)
 	printf("m:     toggle thru scalar coloring\n");
 	printf("a:     toggle the animation on/off\n");
 	printf("q:     quit\n\n");
-	printf("Start with Color settings:%d \n",scalar_col);
+	//printf("Input number of colors (1-255)\n";
+	//cin >> NLEVELS;
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
