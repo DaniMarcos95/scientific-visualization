@@ -161,11 +161,7 @@ void set_colormap( float value, int scalar_col, int NCOLORS)
 	else	//grayscale
 		blue_yel(value,&R,&G,&B);
 	   
-       //{
-        //  const int NLEVELS = 7;
-         // vy *= NLEVELS; vy = (int)(vy); vy/= NLEVELS;
-	      //rainbow(vy,&R,&G,&B);
-	   //}
+       
 
    glColor3f(R,G,B);
 }
