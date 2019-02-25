@@ -219,10 +219,10 @@ int main(int argc, char **argv, int NLEVELS)
 	setNumberOfColors->set_int_val(255);
 	setNumberOfColors->set_int_limits( 2, 255, GLUI_LIMIT_CLAMP );
 
-	// GLUI_Spinner *spinnerNumberColors = new GLUI_Spinner( objectEdit, "Number of colors:", GLUI_EDITTEXT_INT, &numberOfColors );
-	// spinnerNumberColors->set_int_limits(2, 255);
-	// spinnerNumberColors->set_int_val(255);
-	// NCOLORS = spinnerNumberColors->get_int_val();
+	 GLUI_Spinner *spinnerNumberColors = new GLUI_Spinner( mainPanel, "Number of colors:", GLUI_EDITTEXT_INT, &numberOfColors );
+	 spinnerNumberColors->set_int_limits(2, 255);
+	 spinnerNumberColors->set_int_val(255);
+	 NCOLORS = spinnerNumberColors->get_int_val();
 	
 	init_simulation(DIM);	//initialize the simulation data structures
 	glutMainLoop();			//calls do_one_simulation_step, keyboard, display, drag, reshape

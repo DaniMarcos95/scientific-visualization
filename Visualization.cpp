@@ -33,9 +33,9 @@ void rainbow_bar();
 void blue_to_yellow_bar();
 void grayscale_bar();
 float min(float x, float y);
-const float dx=0;
+const float dx=0.8;
 int NCOLORS = 255;
-
+int dataset_index;
 //convert RGB values to HSV
 void rgb2hsv(float r, float g, float b,
 			float& h, float& s, float& v)
@@ -146,7 +146,7 @@ void blue_yel(float value, float* R, float* G, float* B)
 }
 
 //set_colormap: Sets three different types of colormaps
-void set_colormap( float value, int scalar_col, int NCOLORS)
+void set_colormap( float value, int scalar_col, int NCOLORS, int dataset_index)
 {
    float R,G,B;
 	
@@ -239,15 +239,21 @@ void visualize(void)
 	if (draw_smoke)
 	{
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	for(j=0; j < DIM; j++){
+			if (rho[j]<0) rho[j]=0; 
+			if (rho[j]>1) rho[j]=1;
+	}
 	for (j = 0; j < DIM - 1; j++)			//draw smoke
 	{
-		glBegin(GL_TRIANGLE_STRIP);
+		glBegin(GL_QUAD_STRIP);
 
 		i = 0;
 		px = wn + (fftw_real)i * wn;
 		py = hn + (fftw_real)j * hn;
 		idx = (j * DIM) + i;
-		glColor3f(rho[idx],rho[idx],rho[idx]);
+		
+		//glColor3f(rho[idx],rho[idx],rho[idx]);
+		set_colormap(rho[idx], scalar_col,NCOLORS);
 		glVertex2f(px,py);
 
 		for (i = 0; i < DIM - 1; i++)
