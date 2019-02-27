@@ -15,7 +15,12 @@ fftw_real *vx0, *vy0;           //(vx0,vy0) = velocity field at the previous mom
 fftw_real *fx, *fy;	            //(fx,fy)   = user-controlled simulation forces, steered with the mouse
 fftw_real *rho, *rho0;			//smoke density at the current (rho) and previous (rho0) moment
 rfftwnd_plan plan_rc, plan_cr;  //simulation domain discretization
-
+float max_rho = 0;
+float min_rho = 10;
+float max_f = 0;
+float min_f = 10;
+float max_v = 0;
+float min_v = 10;
 
 void init_simulation(int);
 void FFT(int, void*);
@@ -150,6 +155,30 @@ void diffuse_matter(int n, fftw_real *vx, fftw_real *vy, fftw_real *rho, fftw_re
 			j1 = (j0+1)%n;
 			rho[i+n*j] = (1-s)*((1-t)*rho0[i0+n*j0]+t*rho0[i0+n*j1])+s*((1-t)*rho0[i1+n*j0]+t*rho0[i1+n*j1]);
 		}
+
+	for (i = 0; i < DIM * DIM; i++){
+		if(rho[i] < min_rho){
+        	min_rho = rho[i];
+        }else if(rho[i] > max_rho){
+        	max_rho = rho[i];
+        }
+
+        float v_magnitude = sqrt(pow(vx[i],2) + pow(vy[i],2));
+        if(v_magnitude < min_v){
+        	min_v = v_magnitude;
+        }else if(v_magnitude > max_v){
+        	max_v = v_magnitude;
+        }
+        
+        float f_magnitude = sqrt(pow(fx[i],2) + pow(fy[i],2));
+        if(f_magnitude < min_f){
+        	min_f = f_magnitude;
+        }else if(f_magnitude > max_f){
+        	max_f = f_magnitude;
+        }
+	}
+	printf("Max = %f \n", max_rho);
+	printf("Min = %f \n", min_rho);
 }
 
 //set_forces: copy user-controlled forces to the force vectors that are sent to the solver.
@@ -164,7 +193,6 @@ void set_forces(void)
         fy[i] *= 0.85;
         vx0[i]    = fx[i];
         vy0[i]    = fy[i];
-        
 	}
 }
 

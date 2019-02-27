@@ -3,6 +3,7 @@
 #include <GL/glut.h>   
 #include "Simulation.h"
 #include <rfftw.h>              //the numerical simulation FFTW library
+#include <string>
 
 using namespace std;
 
@@ -34,9 +35,18 @@ void rainbow_bar();
 void blue_to_yellow_bar();
 void grayscale_bar();
 float min(float x, float y);
+void render();
 const float dx=0.8;
 int NCOLORS = 255;
 int dataset_index;
+extern float max_rho;
+extern float min_rho;
+extern float max_f;
+extern float min_f;
+extern float max_v;
+extern float min_v;
+
+
 //convert RGB values to HSV
 void rgb2hsv(float r, float g, float b,
 			float& h, float& s, float& v)
@@ -149,26 +159,26 @@ void blue_yel(float value, float* R, float* G, float* B)
 //set_colormap: Sets three different types of colormaps
 void set_colormap( float value, int scalar_col, int NCOLORS)
 {
-   float R,G,B;
-	
+	float R,G,B;
+
 	value *= NCOLORS;
 	value = (int)(value); 
 	value/= NCOLORS;
-   if (scalar_col==0) //WHITE
-       {R = value;
+	if (scalar_col==0) //WHITE
+	   {R = value;
 	   G = value;
 	   B = value;}
-   else if (scalar_col==1) //RAINBOW
-       {
+	else if (scalar_col==1) //RAINBOW
+	   {
 		   
 		   rainbow(value,&R,&G,&B);}      
 	   
 	else	//grayscale
 		blue_yel(value,&R,&G,&B);
 	   
-       
+	   
 
-   glColor3f(R,G,B);
+	glColor3f(R,G,B);
 }
 
 
@@ -241,9 +251,9 @@ void visualize(void)
 	{
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-	for(j=0; j < DIM; j++){
-			if (rho[j]<0.3) rho[j]=0.3; 
-			if (rho[j]>0.4) rho[j]=0.4;
+	for(j=0; j < DIM*DIM; j++){
+			if (rho[j]<min_rho) rho[j]=min_rho; 
+			if (rho[j]>max_rho) rho[j]=max_rho;
 	}
 	for (j = 0; j < DIM - 1; j++)			//draw smoke
 	{
@@ -345,6 +355,7 @@ void visualize(void)
 	  glEnd();
 	}
 	draw_color_legend();
+	render();
 }
 void draw_color_legend(){
 	switch (color_dir)
@@ -362,6 +373,36 @@ void draw_color_legend(){
 	
 	
 	
+}
+
+void drawBitmapText(char *string,float x,float y) 
+{  
+	char *c;
+	glRasterPos2f(x, y);
+	int count = 0;
+
+	for (c=string; *c != ' '; c++) 
+	{	
+		if(count == 5) break;
+		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
+		count++;
+	}
+}
+
+void render(void)
+{ 	
+	glColor3f(1,1,1);
+	// glClear(GL_COLOR_BUFFER_BIT); 
+	// glLoadIdentity();
+
+
+	char array[10];
+	snprintf(array, sizeof(array), "%f ", max_rho);
+	drawBitmapText(array,472,40);
+
+	snprintf(array, sizeof(array), "%f ", min_rho);
+	drawBitmapText(array,6,40);
+	// glutSwapBuffers(); 
 }
 
 void rainbow_bar(){
