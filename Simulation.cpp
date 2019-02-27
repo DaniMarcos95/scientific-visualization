@@ -164,6 +164,7 @@ void set_forces(void)
         fy[i] *= 0.85;
         vx0[i]    = fx[i];
         vy0[i]    = fy[i];
+        
 	}
 }
 

@@ -13,7 +13,8 @@ extern int   winWidth, winHeight;
 extern int   color_dir;           
 extern float vec_scale;			
 extern int   draw_smoke;           
-extern int   draw_vecs;   
+extern int   draw_vecs;
+extern int draw_vec_mod;   
 extern int NCOLORS;         
 // const int COLOR_BLACKWHITE = 0;   
 const int COLOR_RAINBOW = 1;
@@ -60,9 +61,15 @@ void display(void)
 	switch(datasetIndex){
 		case 0: draw_vecs = 0;
 				draw_smoke = 1;
+				draw_vec_mod = 0;
 				break;
-		case 1: draw_vecs = 1;
+		case 1: draw_vecs = 0;
 				draw_smoke = 0;
+				draw_vec_mod = 1;
+				break;
+		case 2: draw_vecs = 1;
+				draw_smoke = 0;
+				draw_vec_mod = 0;
 				break;
 	}
 
@@ -195,8 +202,9 @@ int main(int argc, char **argv, int NLEVELS)
 	GLUI_Panel *datasetPanel = new GLUI_Panel(mainPanel, "Dataset");
 
 	GLUI_RadioGroup *radioDataset = new GLUI_RadioGroup(datasetPanel, &datasetIndex);
-	GLUI_RadioButton *buttonDensity = new GLUI_RadioButton( radioDataset, "Density" );
-	GLUI_RadioButton *buttonVelocity = new GLUI_RadioButton( radioDataset, "Velocity" );
+	GLUI_RadioButton *buttonDensity = new GLUI_RadioButton( radioDataset, "rho" );
+	GLUI_RadioButton *buttonVecMod = new GLUI_RadioButton( radioDataset, "||v||" );
+	GLUI_RadioButton *buttonVelocity = new GLUI_RadioButton( radioDataset, "v" );
 
 
 	glui->add_separator_to_panel( mainPanel );
