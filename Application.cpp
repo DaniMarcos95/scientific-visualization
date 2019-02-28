@@ -30,11 +30,13 @@ extern fftw_real *rho;
 GLUI *glui;
 GLUI_Spinner *spinnerNumberColors;
 int main_window;
-// int  densityCheck  = 1;
-// int velocityCheck = 0;
 int colorMapIndex;
 int datasetIndex;
 int numberOfColors = 255;
+float max_clamped = 10;
+float min_clamped = 0;
+extern float max_rho;
+extern float min_rho;
 
 //display: Handle window redrawing events. Simply delegates to visualize().
 void display(void)
@@ -45,18 +47,6 @@ void display(void)
 	visualize();
 	glFlush();
 	glutSwapBuffers();
-
-	// if ( densityCheck ){
- //    	draw_vecs = 0;
-	// 	draw_smoke = 1;
-	// 	velocityCheck = 0;
- //    }
-  	
- //  	if(velocityCheck){
- //  		draw_vecs = 1;
-	// 	draw_smoke = 0;
-	// 	densityCheck = 0;
- //  	}
 
 	switch(datasetIndex){
 		case 0: draw_vecs = 0;
@@ -84,8 +74,6 @@ void display(void)
 				color_dir = COLOR_BLUEYEL;
 				break;
 	}
-
-	NCOLORS = numberOfColors;
 }
 
 //reshape: Handle window resizing (reshaping) events
@@ -151,9 +139,7 @@ void drag(int mx, int my)
 	lmx = mx; lmy = my;
 }
 
-void myGlutIdle( void ) {
-	glutSetWindow(main_window);
-	glutPostRedisplay();         
+void myGlutIdle( void ) {    
 }
 
 void shutDown(){
@@ -186,52 +172,44 @@ int main(int argc, char **argv, int NLEVELS)
 	glutIdleFunc(do_one_simulation_step);
 	glutKeyboardFunc(keyboard);
 	glutMotionFunc(drag);
-
 	
+
 	GLUI *glui = GLUI_Master.create_glui("");
-	// GLUI_Master.set_glutIdleFunc(myGlutIdle);
-	// glui->set_main_gfx_window( main_window );
 
 	GLUI_Panel *mainPanel = new GLUI_Panel(glui, "Configuration");
 	mainPanel->set_alignment(GLUI_ALIGN_LEFT);
 
-	// GLUI_Listbox *listboxDataset = new GLUI_Listbox(objectEdit, "Dataset: ", &datasetIndex,  12);
-	// listboxDataset->set_alignment(GLUI_ALIGN_LEFT);
-	// listboxDataset->add_item(0, "Density");
-	// listboxDataset->add_item(1, "Velocity");
-	GLUI_Panel *datasetPanel = new GLUI_Panel(mainPanel, "Dataset");
+	GLUI_Panel *panel1 = new GLUI_Panel(mainPanel, "");
+
+	GLUI_Panel *datasetPanel = new GLUI_Panel(panel1, "Dataset");
 
 	GLUI_RadioGroup *radioDataset = new GLUI_RadioGroup(datasetPanel, &datasetIndex);
 	GLUI_RadioButton *buttonDensity = new GLUI_RadioButton( radioDataset, "rho" );
 	GLUI_RadioButton *buttonVecMod = new GLUI_RadioButton( radioDataset, "||v||" );
 	GLUI_RadioButton *buttonVelocity = new GLUI_RadioButton( radioDataset, "v" );
 
+	glui->add_column_to_panel(panel1, true);
 
-	glui->add_separator_to_panel( mainPanel );
-
-	// GLUI_Listbox *listboxColorMap = new GLUI_Listbox(objectEdit, "Colormap: ", &colorMapIndex,  12);
-	// listboxColorMap->set_alignment(GLUI_ALIGN_LEFT);
-	// listboxColorMap->add_item(0, "Grayscale");
-	// listboxColorMap->add_item(1, "Rainbow");
-	// listboxColorMap->add_item(2, "Blue to yellow");
-	GLUI_Panel *colorMapPanel = new GLUI_Panel(mainPanel, "Colormap");
+	GLUI_Panel *colorMapPanel = new GLUI_Panel(panel1, "Colormap");
 
 	GLUI_RadioGroup *radioColorMap = new GLUI_RadioGroup(colorMapPanel, &colorMapIndex);
 	GLUI_RadioButton *buttonGrayScale = new GLUI_RadioButton( radioColorMap, "GrayScale" );
 	GLUI_RadioButton *buttonRainbow = new GLUI_RadioButton( radioColorMap, "Rainbow" );
 	GLUI_RadioButton *buttonBlueToYellow = new GLUI_RadioButton( radioColorMap, "Blue To Yellow" );
 
-	glui->add_separator_to_panel( mainPanel );
+	GLUI_Panel *colorPanel = new GLUI_Panel(mainPanel, "Color configuration");
 
-	GLUI_EditText *setNumberOfColors = new GLUI_EditText(mainPanel, "Number of colors(2-255):", &numberOfColors);
+	GLUI_EditText *setNumberOfColors = new GLUI_EditText(colorPanel, "Number of colors(2-255):", &NCOLORS);
 	setNumberOfColors->set_int_val(255);
 	setNumberOfColors->set_int_limits( 2, 255, GLUI_LIMIT_CLAMP );
 
-	 GLUI_Spinner *spinnerNumberColors = new GLUI_Spinner( mainPanel, "Number of colors:", GLUI_EDITTEXT_INT, &numberOfColors );
-	 spinnerNumberColors->set_int_limits(2, 255);
-	 spinnerNumberColors->set_int_val(255);
-	 NCOLORS = spinnerNumberColors->get_int_val();
-	
+	GLUI_Panel *scalingPanel = new GLUI_Panel(mainPanel, "Scaling/Clamping");
+
+	GLUI_EditText *maxClamped = new GLUI_EditText(scalingPanel, "Maximum value for clamping:", &max_clamped);
+
+	GLUI_EditText *minClamped = new GLUI_EditText(scalingPanel, "Minimum value for clamping:", &min_clamped);
+
+	glui->set_main_gfx_window(main_window);
 	init_simulation(DIM);	//initialize the simulation data structures
 	glutMainLoop();			//calls do_one_simulation_step, keyboard, display, drag, reshape
 	return 0;

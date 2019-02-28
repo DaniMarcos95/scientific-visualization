@@ -45,7 +45,8 @@ extern float max_f;
 extern float min_f;
 extern float max_v;
 extern float min_v;
-
+extern float max_clamped;
+extern float min_clamped;
 
 //convert RGB values to HSV
 void rgb2hsv(float r, float g, float b,
@@ -252,8 +253,8 @@ void visualize(void)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	for(j=0; j < DIM*DIM; j++){
-			if (rho[j]<min_rho) rho[j]=min_rho; 
-			if (rho[j]>max_rho) rho[j]=max_rho;
+			if (rho[j]<min_clamped) rho[j]=min_clamped; 
+			if (rho[j]>max_clamped) rho[j]=max_clamped;
 	}
 	for (j = 0; j < DIM - 1; j++)			//draw smoke
 	{
@@ -392,17 +393,22 @@ void drawBitmapText(char *string,float x,float y)
 void render(void)
 { 	
 	glColor3f(1,1,1);
-	// glClear(GL_COLOR_BUFFER_BIT); 
-	// glLoadIdentity();
-
 
 	char array[10];
 	snprintf(array, sizeof(array), "%f ", max_rho);
-	drawBitmapText(array,472,40);
+	drawBitmapText(array,440,480);
 
 	snprintf(array, sizeof(array), "%f ", min_rho);
-	drawBitmapText(array,6,40);
-	// glutSwapBuffers(); 
+	drawBitmapText(array,440,15);
+
+	snprintf(array, sizeof(array), "%f ", (min_rho + max_rho)/2);
+	drawBitmapText(array,440,250);
+
+	snprintf(array, sizeof(array), "%f ", 3*(min_rho + max_rho)/4);
+	drawBitmapText(array,440,375);
+
+	snprintf(array, sizeof(array), "%f ", (min_rho + max_rho)/4);
+	drawBitmapText(array,440,125);
 }
 
 void rainbow_bar(){
@@ -411,61 +417,61 @@ void rainbow_bar(){
 	glBegin(GL_QUADS);
 	glShadeModel(GL_SMOOTH);
 	glColor3f(0.4,0.2,1); //Purple
-	glVertex2f(0,0);
+	glVertex2f(470,0);
 	glColor3f(0,0.6,1); //Blue
-	glVertex2f(100,0);
+	glVertex2f(470,100);
 	glColor3f(0,0.6,1); //Blue
-	glVertex2f(100,30);
+	glVertex2f(500,100);
 	glColor3f(0.4,0.2,1); //Purple
-	glVertex2f(0,30);
-	glEnd();
-
-	glBegin(GL_QUADS);
-	glShadeModel(GL_SMOOTH);
-	glColor3f(0,0.6,1); //Blue
-	glVertex2f(100,0);
-	glColor3f(0.2,1,0);//Green
-	glVertex2f(200,0);
-	glColor3f(0.2,1,0);//Green
-	glVertex2f(200,30);
-	glColor3f(0,0.6,1); //Blue
-	glVertex2f(100,30);
-	glEnd();
-
-	glBegin(GL_QUADS);
-	glShadeModel(GL_SMOOTH);
-	glColor3f(0.2,1,0);//Green
-	glVertex2f(200,0);
-	glColor3f(1,1,0); //Yellow
-	glVertex2f(300,0);
-	glColor3f(1,1,0); //Yellow
-	glVertex2f(300,30);
-	glColor3f(0.2,1,0);//Green
-	glVertex2f(200,30);
-	glEnd();
-
-	glBegin(GL_QUADS);
-	glShadeModel(GL_SMOOTH);
-	glColor3f(1,1,0); //Yellow
-	glVertex2f(300,0);
-	glColor3f(1,0.6,0); //Orange
-	glVertex2f(400,0);
-	glColor3f(1,0.6,0); //Orange
-	glVertex2f(400,30);
-	glColor3f(1,1,0); //Yellow
-	glVertex2f(300,30);
-	glEnd();
-
-	glBegin(GL_QUADS);
-	glShadeModel(GL_SMOOTH);
-	glColor3f(1,0.6,0); //Orange
-	glVertex2f(400,0);
-	glColor3f(1,0,0); //Red
 	glVertex2f(500,0);
-	glColor3f(1,0,0); //Red
-	glVertex2f(500,30);
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glShadeModel(GL_SMOOTH);
+	glColor3f(0,0.6,1); //Blue
+	glVertex2f(470,100);
+	glColor3f(0.2,1,0);//Green
+	glVertex2f(470,200);
+	glColor3f(0.2,1,0);//Green
+	glVertex2f(500,200);
+	glColor3f(0,0.6,1); //Blue
+	glVertex2f(500,100);
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glShadeModel(GL_SMOOTH);
+	glColor3f(0.2,1,0);//Green
+	glVertex2f(470,200);
+	glColor3f(1,1,0); //Yellow
+	glVertex2f(470,300);
+	glColor3f(1,1,0); //Yellow
+	glVertex2f(500,300);
+	glColor3f(0.2,1,0);//Green
+	glVertex2f(500,200);
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glShadeModel(GL_SMOOTH);
+	glColor3f(1,1,0); //Yellow
+	glVertex2f(470,300);
 	glColor3f(1,0.6,0); //Orange
-	glVertex2f(400,30);
+	glVertex2f(470,400);
+	glColor3f(1,0.6,0); //Orange
+	glVertex2f(500,400);
+	glColor3f(1,1,0); //Yellow
+	glVertex2f(500,300);
+	glEnd();
+
+	glBegin(GL_QUADS);
+	glShadeModel(GL_SMOOTH);
+	glColor3f(1,0.6,0); //Orange
+	glVertex2f(470,400);
+	glColor3f(1,0,0); //Red
+	glVertex2f(470,500);
+	glColor3f(1,0,0); //Red
+	glVertex2f(500,500);
+	glColor3f(1,0.6,0); //Orange
+	glVertex2f(500,400);
 	glEnd();
 }
 
@@ -475,23 +481,23 @@ void blue_to_yellow_bar(){
 	glBegin(GL_QUADS);
 	glShadeModel(GL_SMOOTH);
 	glColor3f(0,0.0,1); 
-	glVertex2f(0,0);
+	glVertex2f(470,0);
 	glColor3f(0.2,1,0); 
-	glVertex2f(250,0);
-	glVertex2f(250,30);
+	glVertex2f(470,250);
+	glVertex2f(500,250);
 	glColor3f(0,0.0,1); 
-	glVertex2f(0,30);
+	glVertex2f(500,0);
 	glEnd();
 
 	glBegin(GL_QUADS);
 	glShadeModel(GL_SMOOTH);
 	glColor3f(0.2,1,0); 
-	glVertex2f(250,0);
+	glVertex2f(470,250);
 	glColor3f(1,1,0); 
-	glVertex2f(500,0);
-	glVertex2f(500,30);
+	glVertex2f(470,500);
+	glVertex2f(500,500);
 	glColor3f(0.2,1,0); 
-	glVertex2f(250,30);
+	glVertex2f(500,250);
 	glEnd();
 
 }
@@ -502,12 +508,12 @@ void grayscale_bar(){
 	glBegin(GL_QUADS);
 	glShadeModel(GL_SMOOTH);
 	glColor3f(0,0,0); 
-	glVertex2f(0,0);
+	glVertex2f(470,0);
 	glColor3f(1,1,1); 
-	glVertex2f(500,0);
-	glVertex2f(500,30);
+	glVertex2f(470,500);
+	glVertex2f(500,500);
 	glColor3f(0,0,0); 
-	glVertex2f(0,30);
+	glVertex2f(500,0);
 	glEnd();
 
 }
