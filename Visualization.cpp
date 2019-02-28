@@ -94,7 +94,7 @@ void hsv2rgb(float h, float s, float v, float& r, float& g, float& b)
 //rainbow: Implements a color palette, mapping the scalar 'value' to a rainbow color RGB
 void rainbow(float value,float* R,float* G,float* B)
 {
-   //const float dx=0.8;
+    const float dx=0.8;
 	if (value<0) value=0; 
 	if (value>1) value=1;
 	value = (6-2*dx)*value+dx;
@@ -241,10 +241,11 @@ void direction_to_color(float x, float y, int method)
 	
 }
 
- float scaling_clamping(float value,float max, float min){
- 	if (value<min) value=min; 
-	if (value>max) value=max;
- 	value = (value - min)/(max - min);
+ float scaling_clamping(float value,float maxi, float mini){
+	//value = value*maxi;
+ 	if (value<mini) value=mini; 
+	if (value>maxi) value=maxi;
+ 	value = (value - mini)/(maxi - mini);
  	return value;
  }
 
@@ -278,7 +279,7 @@ void visualize(void)
 		idx = (j * DIM) + i;
 		
 		//glColor3f(rho[idx],rho[idx],rho[idx]);
-		scaling_clamping(rho[idx], max_clamped, min_clamped);
+		rho[idx] = scaling_clamping(rho[idx], max_clamped, min_clamped);
 		set_colormap(rho[idx], scalar_col,NCOLORS);
 		glVertex2f(px,py);
 
@@ -295,7 +296,7 @@ void visualize(void)
 			py = hn + (fftw_real)j * hn;
 			idx = (j * DIM) + (i + 1);
 			//direction_to_color(vx[idx],vy[idx],color_dir);
-			scaling_clamping(rho[idx], max_clamped, min_clamped);
+			rho[idx] = scaling_clamping(rho[idx], max_clamped, min_clamped);
 			set_colormap(rho[idx], scalar_col,NCOLORS);
 			//printf("%f\n",rho[idx]);
 			glVertex2f(px, py);
@@ -304,7 +305,7 @@ void visualize(void)
 		px = wn + (fftw_real)(DIM - 1) * wn;
 		py = hn + (fftw_real)(j + 1) * hn;
 		idx = ((j + 1) * DIM) + (DIM - 1);
-		scaling_clamping(rho[idx], max_clamped, min_clamped);
+		rho[idx] = scaling_clamping(rho[idx], max_clamped, min_clamped);
 		set_colormap(rho[idx],scalar_col,NCOLORS);
 		glVertex2f(px, py);
 		glEnd();
