@@ -58,9 +58,13 @@ void display(void)
 				draw_vec_mod = 1;
 				break;
 		case 2: draw_vecs = 1;
-				draw_smoke = 0;
+				draw_smoke = 1;
 				draw_vec_mod = 0;
 				break;
+		/*case 3: draw_vecs = 1;
+				draw_smoke = 1;
+				draw_vec_mod = 0;
+				break;*/
 	}
 
 	switch(colorMapIndex){
@@ -148,7 +152,7 @@ void shutDown(){
 
 int main(int argc, char **argv, int NLEVELS)
 {
-	printf("Fluid Flow Simulation and Visualization\n");
+	/*printf("Fluid Flow Simulation and Visualization\n");
 	printf("=======================================\n");
 	printf("Click and drag the mouse to steer the flow!\n");
 	printf("T/t:   increase/decrease simulation timestep\n");
@@ -159,7 +163,7 @@ int main(int argc, char **argv, int NLEVELS)
 	printf("y:     toggle drawing hedgehogs on/off\n");
 	printf("m:     toggle thru scalar coloring\n");
 	printf("a:     toggle the animation on/off\n");
-	printf("q:     quit\n\n");
+	printf("q:     quit\n\n");*/
 	//printf("Input number of colors (1-255)\n";
 	//cin >> NLEVELS;
 
