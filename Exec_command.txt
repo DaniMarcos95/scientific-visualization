@@ -1,1 +1,1 @@
-g++ -ggdb -Wall -pipe -no-pie *.cpp -o smoke -L./fftw-2.1.5/lib/ -lrfftw -lfftw -lglui -lglut -lGL -lGLU -lGLEW -lm -I./fftw-2.1.5/include/
+g++ -ggdb -Wall -w -pipe -no-pie *.cpp -o smoke -L./fftw-2.1.5/lib/ -lrfftw -lfftw -lglui -lglut -lGL -lGLU -lGLEW -lm -I./fftw-2.1.5/include/

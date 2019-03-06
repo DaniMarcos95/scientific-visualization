@@ -24,7 +24,7 @@ const int COLOR_BLUEYEL =2;
 int   scalar_col = 0;           //method for scalar coloring 
 int   frozen = 0;               //toggles on/off the animation 
 void rainbow(float,float*,float*,float*);
-void set_colormap(float);
+void set_colormap(float , int , int );
 void direction_to_color(float, float, int);
 double RGB_to_lin(double x);
 double lin_to_RGB( double y);
@@ -47,6 +47,7 @@ extern float max_v;
 extern float min_v;
 extern float max_clamped;
 extern float min_clamped;
+fftw_real  hn;
 
 //convert RGB values to HSV
 void rgb2hsv(float r, float g, float b,
@@ -144,12 +145,11 @@ void blue_yel(float value, float* R, float* G, float* B)
 {
    //const float dx=0.8;
    //value = (6-2*dx)*value+dx;
-   if (value<0) value=0; 
-   if (value>1) value=1;
+   if (value<min_clamped) value=min_clamped; 
+   if (value>max_clamped) value=max_clamped;
+   value = (value - min_clamped) / (max_clamped - min_clamped);
    value = 6*value; //set value to [0,6] range
-   
-   
-   
+    
    *R = max(0.0,(3-fabs(value-6)));
    *G = max(0.0,(6-fabs(value-3)-fabs(value-6))/2);
    *B = max(0.0,(3-fabs(value)));
@@ -168,10 +168,13 @@ void set_colormap( float value, int scalar_col, int NCOLORS)
 	value *= NCOLORS;
 	value = (int)(value); 
 	value/= NCOLORS;
-	if (scalar_col==0) //WHITE
-	   {R = value;
-	   G = value;
-	   B = value;}
+	if (scalar_col==0){ //WHITE
+		if (value<min_clamped) {value=min_clamped;} 
+   		if (value>max_clamped) {value=max_clamped;}
+   		value = (value - min_clamped) / (max_clamped - min_clamped);
+	   	R = value;
+	   	G = value;
+	   	B = value;}
 	else if (scalar_col==1) //RAINBOW
 	   {
 		   
@@ -254,11 +257,11 @@ void direction_to_color(float x, float y, int method)
  }
 
 //visualize: This is the main visualization function
-void visualize(void)
+void visualize()
 {	
 	int        i, j, idx; double px,py; float vec_mod;
 	fftw_real  wn = (fftw_real)winWidth / (fftw_real)(DIM + 1);   // Grid cell width
-	fftw_real  hn = (fftw_real)winHeight / (fftw_real)(DIM + 1);  // Grid cell heigh
+	hn = (fftw_real)winHeight / (fftw_real)(DIM + 1);  // Grid cell heigh
 
 	if (draw_smoke)
 	{
@@ -292,7 +295,7 @@ void visualize(void)
 			px = wn + (fftw_real)i * wn;
 			py = hn + (fftw_real)(j + 1) * hn;
 			idx = ((j + 1) * DIM) + i;
-			scaling_clamping(rho[idx], max_clamped, min_clamped);
+			//scaling_clamping(rho[idx], max_clamped, min_clamped);
 			set_colormap(rho[idx], scalar_col,NCOLORS);
 			//direction_to_color(vx[idx],vy[idx],color_dir);
 			glVertex2f(px, py);
@@ -375,8 +378,8 @@ void visualize(void)
 	    }
 	  glEnd();
 	}
-	draw_color_legend();
-	render();
+	// draw_color_legend();
+	// render();
 }
 void draw_color_legend(){
 	switch (color_dir)
@@ -394,41 +397,6 @@ void draw_color_legend(){
 	
 	
 	
-}
-
-void drawBitmapText(char *string,float x,float y) 
-{  
-	char *c;
-	glRasterPos2f(x, y);
-	int count = 0;
-
-	for (c=string; *c != ' '; c++) 
-	{	
-		if(count == 5) break;
-		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
-		count++;
-	}
-}
-
-void render(void)
-{ 	
-	glColor3f(1,1,1);
-
-	char array[10];
-	snprintf(array, sizeof(array), "%f ", max_rho);
-	drawBitmapText(array,440,480);
-
-	snprintf(array, sizeof(array), "%f ", min_rho);
-	drawBitmapText(array,440,15);
-
-	snprintf(array, sizeof(array), "%f ", (min_rho + max_rho)/2);
-	drawBitmapText(array,440,250);
-
-	snprintf(array, sizeof(array), "%f ", 3*(min_rho + max_rho)/4);
-	drawBitmapText(array,440,375);
-
-	snprintf(array, sizeof(array), "%f ", (min_rho + max_rho)/4);
-	drawBitmapText(array,440,125);
 }
 
 void rainbow_bar(){

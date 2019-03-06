@@ -6,7 +6,6 @@
 #include "Simulation.h"
 #include <GL/glui.h>
 
-
 using namespace std;
 
 extern int   winWidth, winHeight;      
@@ -16,7 +15,7 @@ extern int   draw_smoke;
 extern int   draw_vecs;
 extern int draw_vec_mod;   
 extern int NCOLORS;         
-// const int COLOR_BLACKWHITE = 0;   
+const int COLOR_BLACKWHITE = 0;   
 const int COLOR_RAINBOW = 1;
 const int COLOR_GRAYSCALE = 0;
 const int COLOR_BLUEYEL = 2;
@@ -37,14 +36,76 @@ float max_clamped = 10;
 float min_clamped = 0;
 extern float max_rho;
 extern float min_rho;
+extern fftw_real  hn;
 
 //display: Handle window redrawing events. Simply delegates to visualize().
+
+void drawBitmapText(char *string,float x,float y) 
+{  
+	char *c;
+	glRasterPos2f(x, y);
+	int count = 0;
+
+	for (c=string; *c != ' '; c++) 
+	{	
+		if(count == 5) break;
+		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_10, *c);
+		count++;
+	}
+}
+
+void render_text(void)
+{ 	
+	glColor3f(1,1,1);
+
+	char array[10];
+	snprintf(array, sizeof(array), "%f ", max_rho);
+	drawBitmapText(array,winWidth - 70,winHeight - 20);
+
+	snprintf(array, sizeof(array), "%f ", min_rho);
+	drawBitmapText(array,winWidth - 70,15);
+
+	snprintf(array, sizeof(array), "%f ", (min_rho + max_rho)/2);
+	drawBitmapText(array,winWidth - 70,winHeight/2);
+
+	snprintf(array, sizeof(array), "%f ", 3*(min_rho + max_rho)/4);
+	drawBitmapText(array,winWidth - 70,3*winHeight/4);
+
+	snprintf(array, sizeof(array), "%f ", (min_rho + max_rho)/4);
+	drawBitmapText(array,winWidth - 70,winHeight/4);
+}
+
 void display(void)
 {
+
+	float colorBoxSize = (float)(winHeight - 2 *hn) / (float) NCOLORS;
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	visualize();
+
+	int legend_sz = 40;
+	int gridWidth = winWidth - legend_sz;
+	for (int i = 0; i < NCOLORS; ++i)
+	{
+		float val = (float) i/((float) (NCOLORS-1));
+		float y1 = hn+colorBoxSize*i;
+        float x1 = gridWidth; // 
+        float y2 = hn+colorBoxSize*(i+1);
+        float x2 = gridWidth + legend_sz;
+        set_colormap(val, scalar_col, NCOLORS);
+        glRecti(x1,y1,x2,y2);
+	}
+
+	render_text();
+	// char string[48];
+ //    snprintf (string, sizeof(string), "%1.1f", min_clamped);
+ //    draw_text(string, winWidth+40, hn);
+ //    snprintf (string, sizeof(string), "%1.1f", max_clamped);
+ //    draw_text(string, winWidth+40, (DIM-1)*hn);
+
+
+
 	glFlush();
 	glutSwapBuffers();
 
