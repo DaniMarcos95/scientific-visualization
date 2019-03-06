@@ -65,6 +65,7 @@ void drawBitmapText(char *string,float x,float y)
 void render_text(void)
 { 	
 	glColor3f(1,1,1);
+	
 
 	char array[10];
 	snprintf(array, sizeof(array), "%f ", max_clamped);
@@ -76,10 +77,10 @@ void render_text(void)
 	snprintf(array, sizeof(array), "%f ", (min_clamped + max_clamped)/2);
 	drawBitmapText(array,winWidth - 70,winHeight/2);
 
-	snprintf(array, sizeof(array), "%f ", 3*(min_clamped + max_clamped)/4);
+	snprintf(array, sizeof(array), "%f ",min_clamped + 3*(fabs(min_clamped - max_clamped))/4);
 	drawBitmapText(array,winWidth - 70,3*winHeight/4);
 
-	snprintf(array, sizeof(array), "%f ", (min_clamped + max_clamped)/4);
+	snprintf(array, sizeof(array), "%f ", min_clamped + (fabs(min_clamped - max_clamped))/4);
 	drawBitmapText(array,winWidth - 70,winHeight/4);
 }
 
