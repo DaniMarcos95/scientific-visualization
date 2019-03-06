@@ -9,14 +9,16 @@ using namespace std;
 
 const int DIM = 50;
 extern fftw_real *vx, *vy; 
+extern fftw_real *fx, *fy;	
 extern fftw_real *rho;
 void visualize(void);
 int   winWidth, winHeight;	//size of the graphics window, in pixels 
 int   color_dir = 0;           //use direction color-coding or not 
 float vec_scale = 1000;			//scaling of hedgehogs 
-int   draw_smoke = 0;           //draw the smoke or not 
+int   draw_rho = 0;           //draw the smoke or not 
 int   draw_vecs = 1;            //draw the vector field or not 
 int draw_vec_mod = 0;
+int draw_for_mod = 0;
 // const int COLOR_BLACKWHITE=0;   //different types of color mapping: black-and-white, rainbow, banded
 const int COLOR_RAINBOW=1;
 const int COLOR_GRAYSCALE=0;
@@ -266,22 +268,13 @@ void direction_to_color(float x, float y, int method)
 //visualize: This is the main visualization function
 void visualize()
 {	
-	int        i, j, idx; double px,py; float vec_mod;
+	int        i, j, idx; double px,py; float vec_mod, for_mod;
 	fftw_real  wn = (fftw_real)winWidth / (fftw_real)(DIM + 1);   // Grid cell width
 	hn = (fftw_real)winHeight / (fftw_real)(DIM + 1);  // Grid cell heigh
 
-	if (draw_smoke)
+	if (draw_rho)
 	{
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-	// for(j=0; j < DIM*DIM; j++){
-	// 	if (rho[j]<min_clamped) rho[j]=min_clamped; 
-	// 	if (rho[j]>max_clamped) rho[j]=max_clamped;
-	// }
-	
-	// for(j=0; j < DIM*DIM; j++){
-	// 	rho[j] = (rho[j] - min_clamped)/(max_clamped - min_clamped);
-	// }
 
 	for (j = 0; j < DIM - 1; j++)			//draw smoke
 	{
@@ -291,9 +284,7 @@ void visualize()
 		px = wn + (fftw_real)i * wn;
 		py = hn + (fftw_real)j * hn;
 		idx = (j * DIM) + i;
-		
-		//glColor3f(rho[idx],rho[idx],rho[idx]);
-		//rho[idx] = scaling_clamping(rho[idx], max_clamped, min_clamped);
+
 		set_colormap(rho[idx], scalar_col,NCOLORS,0);
 		glVertex2f(px,py);
 
@@ -302,24 +293,21 @@ void visualize()
 			px = wn + (fftw_real)i * wn;
 			py = hn + (fftw_real)(j + 1) * hn;
 			idx = ((j + 1) * DIM) + i;
-			//scaling_clamping(rho[idx], max_clamped, min_clamped);
+
 			set_colormap(rho[idx], scalar_col,NCOLORS,0);
-			//direction_to_color(vx[idx],vy[idx],color_dir);
+
 			glVertex2f(px, py);
 			px = wn + (fftw_real)(i + 1) * wn;
 			py = hn + (fftw_real)j * hn;
 			idx = (j * DIM) + (i + 1);
-			//direction_to_color(vx[idx],vy[idx],color_dir);
-			//rho[idx] = scaling_clamping(rho[idx], max_clamped, min_clamped);
+
 			set_colormap(rho[idx], scalar_col,NCOLORS,0);
-			//printf("%f\n",rho[idx]);
 			glVertex2f(px, py);
 		}
 
 		px = wn + (fftw_real)(DIM - 1) * wn;
 		py = hn + (fftw_real)(j + 1) * hn;
 		idx = ((j + 1) * DIM) + (DIM - 1);
-		//rho[idx] = scaling_clamping(rho[idx], max_clamped, min_clamped);
 		set_colormap(rho[idx],scalar_col,NCOLORS,0);
 		glVertex2f(px, py);
 		glEnd();
@@ -329,19 +317,17 @@ void visualize()
 	//Drawing the smoke module ||v||- not working at the moment.
 	if (draw_vec_mod)
 	{
-	glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-	// for(j=0; j < DIM; j++){
-	// 		if (rho[j]<0) rho[j]=0; 
-	// 		if (rho[j]>1) rho[j]=1;
-	// }
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 	for (j = 0; j < DIM - 1; j++)			//draw smoke
 	{
-		glBegin(GL_LINE_LOOP);
+		glBegin(GL_QUAD_STRIP);
 
 		i = 0;
 		px = wn + (fftw_real)i * wn;
 		py = hn + (fftw_real)j * hn;
 		idx = (j * DIM) + i;
+
 		vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
 		set_colormap(vec_mod, scalar_col,NCOLORS,0);
 		glVertex2f(px,py);
@@ -351,12 +337,15 @@ void visualize()
 			px = wn + (fftw_real)i * wn;
 			py = hn + (fftw_real)(j + 1) * hn;
 			idx = ((j + 1) * DIM) + i;
+
 			vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
 			set_colormap(vec_mod, scalar_col,NCOLORS,0);
+
 			glVertex2f(px, py);
 			px = wn + (fftw_real)(i + 1) * wn;
 			py = hn + (fftw_real)j * hn;
 			idx = (j * DIM) + (i + 1);
+
 			vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
 			set_colormap(vec_mod, scalar_col,NCOLORS,0);
 			glVertex2f(px, py);
@@ -366,7 +355,53 @@ void visualize()
 		py = hn + (fftw_real)(j + 1) * hn;
 		idx = ((j + 1) * DIM) + (DIM - 1);
 		vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
-		set_colormap(vec_mod,scalar_col,NCOLORS,0);
+		set_colormap(vec_mod, scalar_col,NCOLORS,0);
+		glVertex2f(px, py);
+		glEnd();
+	}
+	}
+
+	if (draw_for_mod)
+	{
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	for (j = 0; j < DIM - 1; j++)			//draw smoke
+	{
+		glBegin(GL_QUAD_STRIP);
+
+		i = 0;
+		px = wn + (fftw_real)i * wn;
+		py = hn + (fftw_real)j * hn;
+		idx = (j * DIM) + i;
+
+		for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
+		set_colormap(for_mod, scalar_col,NCOLORS,0);
+		glVertex2f(px,py);
+
+		for (i = 0; i < DIM - 1; i++)
+		{
+			px = wn + (fftw_real)i * wn;
+			py = hn + (fftw_real)(j + 1) * hn;
+			idx = ((j + 1) * DIM) + i;
+
+			for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
+			set_colormap(for_mod, scalar_col,NCOLORS,0);
+
+			glVertex2f(px, py);
+			px = wn + (fftw_real)(i + 1) * wn;
+			py = hn + (fftw_real)j * hn;
+			idx = (j * DIM) + (i + 1);
+
+			for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
+			set_colormap(for_mod, scalar_col,NCOLORS,0);
+			glVertex2f(px, py);
+		}
+
+		px = wn + (fftw_real)(DIM - 1) * wn;
+		py = hn + (fftw_real)(j + 1) * hn;
+		idx = ((j + 1) * DIM) + (DIM - 1);
+		for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
+		set_colormap(for_mod, scalar_col,NCOLORS,0);
 		glVertex2f(px, py);
 		glEnd();
 	}

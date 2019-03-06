@@ -177,8 +177,6 @@ void diffuse_matter(int n, fftw_real *vx, fftw_real *vy, fftw_real *rho, fftw_re
         	max_f = f_magnitude;
         }
 	}
-	printf("Max = %f \n", max_rho);
-	printf("Min = %f \n", min_rho);
 }
 
 //set_forces: copy user-controlled forces to the force vectors that are sent to the solver.

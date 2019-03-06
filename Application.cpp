@@ -11,9 +11,10 @@ using namespace std;
 extern int   winWidth, winHeight;      
 extern int   color_dir;           
 extern float vec_scale;			
-extern int   draw_smoke;           
+extern int   draw_rho;           
 extern int   draw_vecs;
-extern int draw_vec_mod;   
+extern int draw_vec_mod; 
+extern int draw_for_mod;   
 extern int NCOLORS;         
 const int COLOR_BLACKWHITE = 0;   
 const int COLOR_RAINBOW = 1;
@@ -36,7 +37,14 @@ float max_clamped = 10;
 float min_clamped = 0;
 extern float max_rho;
 extern float min_rho;
+extern float max_v;
+extern float min_v;
+extern float max_f;
+extern float min_f;
 extern fftw_real  hn;
+GLUI_EditText *maxClamped;
+GLUI_EditText *minClamped;
+int aux_repetition = -1;
 
 //display: Handle window redrawing events. Simply delegates to visualize().
 
@@ -102,23 +110,53 @@ void display(void)
 	glFlush();
 	glutSwapBuffers();
 
+	int repetition = -1;
+
 	switch(datasetIndex){
-		case 0: draw_vecs = 0;
-				draw_smoke = 1;
+		case 0: repetition = 0;
+				draw_vecs = 0;
+				draw_rho = 1;
 				draw_vec_mod = 0;
+				draw_for_mod = 0;
+				if(repetition != aux_repetition){
+					maxClamped->set_float_val(max_rho);
+					minClamped->set_float_val(min_rho);
+					aux_repetition = repetition;
+				}
 				break;
-		case 1: draw_vecs = 0;
-				draw_smoke = 0;
+		case 1: repetition = 1;
+				draw_vecs = 0;
+				draw_rho = 0;
 				draw_vec_mod = 1;
+				draw_for_mod = 0;
+				if(repetition != aux_repetition){
+					maxClamped->set_float_val(max_v);
+					minClamped->set_float_val(min_v);
+					aux_repetition = repetition;
+				}
 				break;
-		case 2: draw_vecs = 1;
-				draw_smoke = 1;
+		case 2:	repetition = 2;
+				draw_vecs = 0;
+				draw_rho = 0;
 				draw_vec_mod = 0;
+				draw_for_mod = 1;
+				if(repetition != aux_repetition){
+					maxClamped->set_float_val(max_f);
+					minClamped->set_float_val(min_f);
+					aux_repetition = repetition;
+				}
 				break;
-		/*case 3: draw_vecs = 1;
-				draw_smoke = 1;
+		case 3: repetition = 3;
+				draw_vecs = 1;
+				draw_rho = 1;
 				draw_vec_mod = 0;
-				break;*/
+				draw_for_mod = 0;
+				if(repetition != aux_repetition){
+					maxClamped->set_float_val(max_rho);
+					minClamped->set_float_val(min_rho);
+					aux_repetition = repetition;
+				}
+				break;
 	}
 
 	switch(colorMapIndex){
@@ -156,11 +194,11 @@ void keyboard(unsigned char key, int x, int y)
 	  case 's': vec_scale *= 0.8; break;
 	  case 'V': visc *= 5; break;
 	  case 'v': visc *= 0.2; break;
-	  case 'x': draw_smoke = 1 - draw_smoke;
-		    if (draw_smoke==0) draw_vecs = 1; 
+	  case 'x': draw_rho = 1 - draw_rho;
+		    if (draw_rho==0) draw_vecs = 1; 
 		    break;
 	  case 'y': draw_vecs = 1 - draw_vecs;
-		    if (draw_vecs==0) draw_smoke = 1; 
+		    if (draw_vecs==0) draw_rho = 1; 
 		    break;
 	  case 'm': scalar_col++; color_dir++; if (scalar_col>COLOR_BLUEYEL && color_dir>3) {scalar_col=COLOR_GRAYSCALE; color_dir =0;} break;
 	  case 'a': frozen = 1-frozen; break;
@@ -244,6 +282,7 @@ int main(int argc, char **argv, int NLEVELS)
 	GLUI_RadioGroup *radioDataset = new GLUI_RadioGroup(datasetPanel, &datasetIndex);
 	GLUI_RadioButton *buttonDensity = new GLUI_RadioButton( radioDataset, "rho" );
 	GLUI_RadioButton *buttonVecMod = new GLUI_RadioButton( radioDataset, "||v||" );
+	GLUI_RadioButton *buttonForMod = new GLUI_RadioButton( radioDataset, "||f||" );
 	GLUI_RadioButton *buttonVelocity = new GLUI_RadioButton( radioDataset, "v" );
 
 	glui->add_column_to_panel(panel1, true);
@@ -263,9 +302,9 @@ int main(int argc, char **argv, int NLEVELS)
 
 	GLUI_Panel *scalingPanel = new GLUI_Panel(mainPanel, "Scaling/Clamping");
 
-	GLUI_EditText *maxClamped = new GLUI_EditText(scalingPanel, "Maximum value for clamping:", &max_clamped);
+	maxClamped = new GLUI_EditText(scalingPanel, "Maximum value for clamping:", &max_clamped);
 
-	GLUI_EditText *minClamped = new GLUI_EditText(scalingPanel, "Minimum value for clamping:", &min_clamped);
+	minClamped = new GLUI_EditText(scalingPanel, "Minimum value for clamping:", &min_clamped);
 
 	glui->set_main_gfx_window(main_window);
 	init_simulation(DIM);	//initialize the simulation data structures
