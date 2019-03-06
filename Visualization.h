@@ -8,5 +8,5 @@ void grayscale(float value, float* R,float* G,float* B);
 
 void direction_to_color(float, float, int);
 void visualize(void);
-void set_colormap(float , int , int );
+void set_colormap(float , int , int , int);
 #endif

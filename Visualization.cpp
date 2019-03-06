@@ -23,8 +23,8 @@ const int COLOR_GRAYSCALE=0;
 const int COLOR_BLUEYEL =2;
 int   scalar_col = 0;           //method for scalar coloring 
 int   frozen = 0;               //toggles on/off the animation 
-void rainbow(float,float*,float*,float*);
-void set_colormap(float , int , int );
+void rainbow(float,float*,float*,float*,int color_bar);
+void set_colormap(float , int , int, int color_bar );
 void direction_to_color(float, float, int);
 double RGB_to_lin(double x);
 double lin_to_RGB( double y);
@@ -93,13 +93,15 @@ void hsv2rgb(float h, float s, float v, float& r, float& g, float& b)
 // PSEUDOCODE ON CLAMPING
 
 //rainbow: Implements a color palette, mapping the scalar 'value' to a rainbow color RGB
-void rainbow(float value,float* R,float* G,float* B)
+void rainbow(float value,float* R,float* G,float* B, int color_bar)
 {
     const float dx=0.8;
 	//printf("%f\n",value);
-	if (value<min_clamped) value=min_clamped; 
-	if (value>max_clamped) value=max_clamped;
-	value = (value - min_clamped) / (max_clamped - min_clamped);
+	if(color_bar != 1){
+   		if (value<min_clamped) value=min_clamped; 
+   		if (value>max_clamped) value=max_clamped;
+   		value = (value - min_clamped) / (max_clamped - min_clamped);
+    }
 	value = (6-2*dx)*value+dx;
 	
 	*R = max(0.0,(3-fabs(value-4)-fabs(value-5))/2);
@@ -141,13 +143,16 @@ void grayscale(float value, float* R,float* G,float* B)
 }*/
 
 //Yellow-Blue Color Spectrum
-void blue_yel(float value, float* R, float* G, float* B)
+void blue_yel(float value, float* R, float* G, float* B, int color_bar)
 {
    //const float dx=0.8;
    //value = (6-2*dx)*value+dx;
-   if (value<min_clamped) value=min_clamped; 
-   if (value>max_clamped) value=max_clamped;
-   value = (value - min_clamped) / (max_clamped - min_clamped);
+   if(color_bar != 1){
+   		if (value<min_clamped) value=min_clamped; 
+   		if (value>max_clamped) value=max_clamped;
+   		value = (value - min_clamped) / (max_clamped - min_clamped);
+   }
+   
    value = 6*value; //set value to [0,6] range
     
    *R = max(0.0,(3-fabs(value-6)));
@@ -161,7 +166,7 @@ void blue_yel(float value, float* R, float* G, float* B)
 }
 
 //set_colormap: Sets three different types of colormaps
-void set_colormap( float value, int scalar_col, int NCOLORS)
+void set_colormap( float value, int scalar_col, int NCOLORS, int color_bar)
 {
 	float R,G,B;
 
@@ -169,19 +174,21 @@ void set_colormap( float value, int scalar_col, int NCOLORS)
 	value = (int)(value); 
 	value/= NCOLORS;
 	if (scalar_col==0){ //WHITE
-		if (value<min_clamped) {value=min_clamped;} 
-   		if (value>max_clamped) {value=max_clamped;}
-   		value = (value - min_clamped) / (max_clamped - min_clamped);
+		if(color_bar != 1){
+	   		if (value<min_clamped) value=min_clamped; 
+	   		if (value>max_clamped) value=max_clamped;
+	   		value = (value - min_clamped) / (max_clamped - min_clamped);
+  		}	
 	   	R = value;
 	   	G = value;
 	   	B = value;}
 	else if (scalar_col==1) //RAINBOW
 	   {
 		   
-		   rainbow(value,&R,&G,&B);}      
+		   rainbow(value,&R,&G,&B, color_bar);}      
 	   
 	else	//grayscale
-		blue_yel(value,&R,&G,&B);
+		blue_yel(value,&R,&G,&B, color_bar);
 	   
 	   
 
@@ -287,7 +294,7 @@ void visualize()
 		
 		//glColor3f(rho[idx],rho[idx],rho[idx]);
 		//rho[idx] = scaling_clamping(rho[idx], max_clamped, min_clamped);
-		set_colormap(rho[idx], scalar_col,NCOLORS);
+		set_colormap(rho[idx], scalar_col,NCOLORS,0);
 		glVertex2f(px,py);
 
 		for (i = 0; i < DIM - 1; i++)
@@ -296,7 +303,7 @@ void visualize()
 			py = hn + (fftw_real)(j + 1) * hn;
 			idx = ((j + 1) * DIM) + i;
 			//scaling_clamping(rho[idx], max_clamped, min_clamped);
-			set_colormap(rho[idx], scalar_col,NCOLORS);
+			set_colormap(rho[idx], scalar_col,NCOLORS,0);
 			//direction_to_color(vx[idx],vy[idx],color_dir);
 			glVertex2f(px, py);
 			px = wn + (fftw_real)(i + 1) * wn;
@@ -304,7 +311,7 @@ void visualize()
 			idx = (j * DIM) + (i + 1);
 			//direction_to_color(vx[idx],vy[idx],color_dir);
 			//rho[idx] = scaling_clamping(rho[idx], max_clamped, min_clamped);
-			set_colormap(rho[idx], scalar_col,NCOLORS);
+			set_colormap(rho[idx], scalar_col,NCOLORS,0);
 			//printf("%f\n",rho[idx]);
 			glVertex2f(px, py);
 		}
@@ -313,7 +320,7 @@ void visualize()
 		py = hn + (fftw_real)(j + 1) * hn;
 		idx = ((j + 1) * DIM) + (DIM - 1);
 		//rho[idx] = scaling_clamping(rho[idx], max_clamped, min_clamped);
-		set_colormap(rho[idx],scalar_col,NCOLORS);
+		set_colormap(rho[idx],scalar_col,NCOLORS,0);
 		glVertex2f(px, py);
 		glEnd();
 	}
@@ -336,7 +343,7 @@ void visualize()
 		py = hn + (fftw_real)j * hn;
 		idx = (j * DIM) + i;
 		vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
-		set_colormap(vec_mod, scalar_col,NCOLORS);
+		set_colormap(vec_mod, scalar_col,NCOLORS,0);
 		glVertex2f(px,py);
 
 		for (i = 0; i < DIM - 1; i++)
@@ -345,13 +352,13 @@ void visualize()
 			py = hn + (fftw_real)(j + 1) * hn;
 			idx = ((j + 1) * DIM) + i;
 			vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
-			set_colormap(vec_mod, scalar_col,NCOLORS);
+			set_colormap(vec_mod, scalar_col,NCOLORS,0);
 			glVertex2f(px, py);
 			px = wn + (fftw_real)(i + 1) * wn;
 			py = hn + (fftw_real)j * hn;
 			idx = (j * DIM) + (i + 1);
 			vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
-			set_colormap(vec_mod, scalar_col,NCOLORS);
+			set_colormap(vec_mod, scalar_col,NCOLORS,0);
 			glVertex2f(px, py);
 		}
 
@@ -359,7 +366,7 @@ void visualize()
 		py = hn + (fftw_real)(j + 1) * hn;
 		idx = ((j + 1) * DIM) + (DIM - 1);
 		vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
-		set_colormap(vec_mod,scalar_col,NCOLORS);
+		set_colormap(vec_mod,scalar_col,NCOLORS,0);
 		glVertex2f(px, py);
 		glEnd();
 	}

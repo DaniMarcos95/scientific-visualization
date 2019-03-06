@@ -59,52 +59,45 @@ void render_text(void)
 	glColor3f(1,1,1);
 
 	char array[10];
-	snprintf(array, sizeof(array), "%f ", max_rho);
+	snprintf(array, sizeof(array), "%f ", max_clamped);
 	drawBitmapText(array,winWidth - 70,winHeight - 20);
 
-	snprintf(array, sizeof(array), "%f ", min_rho);
+	snprintf(array, sizeof(array), "%f ", min_clamped);
 	drawBitmapText(array,winWidth - 70,15);
 
-	snprintf(array, sizeof(array), "%f ", (min_rho + max_rho)/2);
+	snprintf(array, sizeof(array), "%f ", (min_clamped + max_clamped)/2);
 	drawBitmapText(array,winWidth - 70,winHeight/2);
 
-	snprintf(array, sizeof(array), "%f ", 3*(min_rho + max_rho)/4);
+	snprintf(array, sizeof(array), "%f ", 3*(min_clamped + max_clamped)/4);
 	drawBitmapText(array,winWidth - 70,3*winHeight/4);
 
-	snprintf(array, sizeof(array), "%f ", (min_rho + max_rho)/4);
+	snprintf(array, sizeof(array), "%f ", (min_clamped + max_clamped)/4);
 	drawBitmapText(array,winWidth - 70,winHeight/4);
 }
 
 void display(void)
 {
 
-	float colorBoxSize = (float)(winHeight - 2 *hn) / (float) NCOLORS;
+	float stepSize = (float)(winHeight - 2 *hn) / (float) NCOLORS;
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	visualize();
 
-	int legend_sz = 40;
-	int gridWidth = winWidth - legend_sz;
+	int bar_width = 40;
+	int gridWidth = winWidth - bar_width;
 	for (int i = 0; i < NCOLORS; ++i)
 	{
-		float val = (float) i/((float) (NCOLORS-1));
-		float y1 = hn+colorBoxSize*i;
+		float value = (float) i/((float) (NCOLORS));
+		float y1 = hn+stepSize*i;
         float x1 = gridWidth; // 
-        float y2 = hn+colorBoxSize*(i+1);
-        float x2 = gridWidth + legend_sz;
-        set_colormap(val, scalar_col, NCOLORS);
+        float y2 = hn+stepSize*(i+1);
+        float x2 = gridWidth + bar_width;
+        set_colormap(value, scalar_col, NCOLORS,1);
         glRecti(x1,y1,x2,y2);
 	}
 
 	render_text();
-	// char string[48];
- //    snprintf (string, sizeof(string), "%1.1f", min_clamped);
- //    draw_text(string, winWidth+40, hn);
- //    snprintf (string, sizeof(string), "%1.1f", max_clamped);
- //    draw_text(string, winWidth+40, (DIM-1)*hn);
-
-
 
 	glFlush();
 	glutSwapBuffers();
