@@ -33,8 +33,8 @@ int main_window;
 int colorMapIndex;
 int datasetIndex;
 int numberOfColors = 255;
-float max_clamped = 10;
-float min_clamped = 0;
+float max_clamped = 0;
+float min_clamped = 10;
 extern float max_rho;
 extern float min_rho;
 extern float max_v;
@@ -120,6 +120,10 @@ void display(void)
 				draw_vec_mod = 0;
 				draw_for_mod = 0;
 				if(repetition != aux_repetition){
+					if(max_rho < min_rho){
+						max_rho = 10;
+						min_rho = 0;
+					}
 					maxClamped->set_float_val(max_rho);
 					minClamped->set_float_val(min_rho);
 					aux_repetition = repetition;
