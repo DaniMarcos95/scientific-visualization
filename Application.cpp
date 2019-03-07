@@ -153,7 +153,7 @@ void display(void)
 				break;
 		case 3: repetition = 3;
 				draw_vecs = 1;
-				draw_rho = 1;
+				draw_rho = 0;
 				draw_vec_mod = 0;
 				draw_for_mod = 0;
 				if(repetition != aux_repetition){

@@ -208,14 +208,15 @@ void direction_to_color(float x, float y, int method)
 	if (method == 1)
 	{
 	  f = atan2(y,x) / 3.1415927 + 1;
-	  r = f;
-	  if(r > 1) r = 2 - r;
-	  g = f + .66667;
-      if(g > 2) g -= 2;
-	  if(g > 1) g = 2 - g;
-	  b = f + 2 * .66667;
-	  if(b > 2) b -= 2;
-	  if(b > 1) b = 2 - b;
+	  set_colormap(f,scalar_col,NCOLORS,0);
+	  // r = f;
+	  // if(r > 1) r = 2 - r;
+	  // g = f + .66667;
+   //    if(g > 2) g -= 2;
+	  // if(g > 1) g = 2 - g;
+	  // b = f + 2 * .66667;
+	  // if(b > 2) b -= 2;
+	  // if(b > 1) b = 2 - b;
 	}
 	else if (method == 0)
 	{ r = g = b = 1; }
@@ -252,7 +253,7 @@ void direction_to_color(float x, float y, int method)
 		  b = 0.964 * gr;
 		
 	}
-	glColor3f(r,g,b);
+	//glColor3f(r,g,b);
 	
 }
 
@@ -408,6 +409,7 @@ void visualize()
 	}
 
 	if (draw_vecs)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	{
 	  glBegin(GL_TRIANGLES);				//draw velocities
 	  for (i = 0; i < DIM; i++)
@@ -415,8 +417,15 @@ void visualize()
 	    {
 		  idx = (j * DIM) + i;
 		  direction_to_color(vx[idx],vy[idx],color_dir);
-		  glVertex2f(wn + (fftw_real)i * wn, hn + (fftw_real)j * hn);
-		  glVertex2f((wn + (fftw_real)i * wn) + vec_scale * vx[idx], (hn + (fftw_real)j * hn) + vec_scale * vy[idx]);
+		  float cordx1 = wn + (fftw_real)i * wn;
+		  float cordy1 = hn + (fftw_real)j * hn;
+		  float cordx2 = (wn + (fftw_real)i * wn) + vec_scale * vx[idx];
+		  float cordy2 = (hn + (fftw_real)j * hn) + vec_scale * vy[idx];
+		  float cordx3 = (cordx1 + cordx2)/2;
+		  float cordy3 = (cordy1 + cordy2)/2;
+		  glVertex2f(cordx1, cordy1);
+		  glVertex2f(cordx2, cordy2);
+		  glVertex2f(cordx3 + 10, cordy3 + 10);
 	    }
 	  glEnd();
 	}
