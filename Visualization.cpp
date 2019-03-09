@@ -13,7 +13,7 @@ extern fftw_real *fx, *fy;
 extern fftw_real *rho;
 void visualize(void);
 int   winWidth, winHeight;	//size of the graphics window, in pixels 
-int   color_dir = 0;           //use direction color-coding or not 
+int   color_dir = 1;           //use direction color-coding or not 
 float vec_scale = 1000;			//scaling of hedgehogs 
 int   draw_rho = 0;           //draw the smoke or not 
 int   draw_vecs = 1;            //draw the vector field or not 
@@ -317,8 +317,7 @@ void visualize()
 
 	//Drawing the smoke module ||v||- not working at the moment.
 	if (draw_vec_mod)
-	{
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	
 
 	for (j = 0; j < DIM - 1; j++)			//draw smoke
 	{
@@ -360,11 +359,10 @@ void visualize()
 		glVertex2f(px, py);
 		glEnd();
 	}
-	}
+	
 
 	if (draw_for_mod)
-	{
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	
 
 	for (j = 0; j < DIM - 1; j++)			//draw smoke
 	{
@@ -406,16 +404,16 @@ void visualize()
 		glVertex2f(px, py);
 		glEnd();
 	}
-	}
+	
 
 	if (draw_vecs)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	{
+		
 	  glBegin(GL_TRIANGLES);				//draw velocities
 	  for (i = 0; i < DIM; i++)
 	    for (j = 0; j < DIM; j++)
 	    {
 		  idx = (j * DIM) + i;
+		  set_colormap( 0.5*rho[idx], scalar_col,NCOLORS,  2);
 		  direction_to_color(vx[idx],vy[idx],color_dir);
 		  float cordx1 = wn + (fftw_real)i * wn;
 		  float cordy1 = hn + (fftw_real)j * hn;
@@ -428,7 +426,7 @@ void visualize()
 		  glVertex2f(cordx3 + 10, cordy3 + 10);
 	    }
 	  glEnd();
-	}
+	
 	// draw_color_legend();
 	// render();
 }
