@@ -208,15 +208,15 @@ void direction_to_color(float x, float y, int method)
 	if (method == 1)
 	{
 	  f = atan2(y,x) / 3.1415927 + 1;
-	  set_colormap(f,scalar_col,NCOLORS,0);
-	  // r = f;
-	  // if(r > 1) r = 2 - r;
-	  // g = f + .66667;
-   //    if(g > 2) g -= 2;
-	  // if(g > 1) g = 2 - g;
-	  // b = f + 2 * .66667;
-	  // if(b > 2) b -= 2;
-	  // if(b > 1) b = 2 - b;
+	  //set_colormap(f,scalar_col,NCOLORS,0);
+	 r = f;
+	 if(r > 1) r = 2 - r;
+	 g = f + .66667;
+     if(g > 2) g -= 2;
+	   if(g > 1) g = 2 - g;
+	   b = f + 2 * .66667;
+	   if(b > 2) b -= 2;
+	   if(b > 1) b = 2 - b;
 	}
 	else if (method == 0)
 	{ r = g = b = 1; }
@@ -321,7 +321,7 @@ void visualize()
 
 	for (j = 0; j < DIM - 1; j++)			//draw smoke
 	{
-		glBegin(GL_QUAD_STRIP);
+		glBegin(GL_POINTS);
 
 		i = 0;
 		px = wn + (fftw_real)i * wn;
@@ -329,7 +329,7 @@ void visualize()
 		idx = (j * DIM) + i;
 
 		vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
-		set_colormap(vec_mod, scalar_col,NCOLORS,0);
+		//set_colormap(vec_mod, scalar_col,NCOLORS,1);
 		glVertex2f(px,py);
 
 		for (i = 0; i < DIM - 1; i++)
@@ -408,12 +408,12 @@ void visualize()
 
 	if (draw_vecs)
 		
-	  glBegin(GL_TRIANGLES);				//draw velocities
+	  glBegin(GL_TRIANGLES);//draw velocities
 	  for (i = 0; i < DIM; i++)
 	    for (j = 0; j < DIM; j++)
 	    {
 		  idx = (j * DIM) + i;
-		  set_colormap( 0.5*rho[idx], scalar_col,NCOLORS,  2);
+		  set_colormap( 0.5*rho[idx], scalar_col,NCOLORS,  0);  
 		  direction_to_color(vx[idx],vy[idx],color_dir);
 		  float cordx1 = wn + (fftw_real)i * wn;
 		  float cordy1 = hn + (fftw_real)j * hn;
