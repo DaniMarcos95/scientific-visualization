@@ -463,7 +463,7 @@ void visualize()
 				glTranslatef(px, py,0);						
 				glRotatef(90-angle,0,0,-1);
 				glRotatef(-90,1,0,0);
-				glutSolidCone(radius/4,radius,30,30);		
+				glutSolidCone(radius/4,radius,10,10);		
 				glPopMatrix();
 			}
 		}
