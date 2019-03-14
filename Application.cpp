@@ -13,6 +13,7 @@ extern int   color_dir;
 extern float vec_scale;			
 extern int   draw_rho;           
 extern int   draw_vecs;
+extern int draw_for;
 extern int draw_vec_mod; 
 extern int draw_for_mod;   
 extern int NCOLORS;         
@@ -116,6 +117,7 @@ void display(void)
 	switch(datasetIndex){
 		case 0: repetition = 0;
 				draw_vecs = 0;
+				draw_for = 0;
 				draw_rho = 1;
 				draw_vec_mod = 0;
 				draw_for_mod = 0;
@@ -131,6 +133,7 @@ void display(void)
 				break;
 		case 1: repetition = 1;
 				draw_vecs = 0;
+				draw_for = 0;
 				draw_rho = 0;
 				draw_vec_mod = 1;
 				draw_for_mod = 0;
@@ -142,6 +145,7 @@ void display(void)
 				break;
 		case 2:	repetition = 2;
 				draw_vecs = 0;
+				draw_for = 0;
 				draw_rho = 0;
 				draw_vec_mod = 0;
 				draw_for_mod = 1;
@@ -153,6 +157,19 @@ void display(void)
 				break;
 		case 3: repetition = 3;
 				draw_vecs = 1;
+				draw_for = 0;
+				draw_rho = 0;
+				draw_vec_mod = 1;
+				draw_for_mod = 0;
+				if(repetition != aux_repetition){
+					maxClamped->set_float_val(max_rho);
+					minClamped->set_float_val(min_rho);
+					aux_repetition = repetition;
+				}
+				break;
+		case 4: repetition = 3;
+				draw_vecs = 0;
+				draw_for = 1;
 				draw_rho = 0;
 				draw_vec_mod = 1;
 				draw_for_mod = 0;
@@ -289,6 +306,7 @@ int main(int argc, char **argv, int NLEVELS)
 	GLUI_RadioButton *buttonVecMod = new GLUI_RadioButton( radioDataset, "||v||" );
 	GLUI_RadioButton *buttonForMod = new GLUI_RadioButton( radioDataset, "||f||" );
 	GLUI_RadioButton *buttonVelocity = new GLUI_RadioButton( radioDataset, "v" );
+	GLUI_RadioButton *buttonForces = new GLUI_RadioButton( radioDataset, "f" );
 
 	glui->add_column_to_panel(panel1, true);
 

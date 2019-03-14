@@ -16,6 +16,7 @@ int   winWidth, winHeight;	//size of the graphics window, in pixels
 int   color_dir = 1;           //use direction color-coding or not 
 float vec_scale = 10;			//scaling of hedgehogs 
 int   draw_rho = 0;           //draw the smoke or not 
+int draw_for = 0;
 int   draw_vecs = 0;            //draw the vector field or not 
 int draw_vec_mod = 0;
 int draw_for_mod = 0;
@@ -417,8 +418,7 @@ void visualize()
 	// 	    direction_to_color(vx[idx],vy[idx],color_dir);
 	// 	    float cordx1 = wn + (fftw_real)i * wn;
 	// 	    float cordy1 = hn + (fftw_real)j * hn;
-	// 	    float cordx2 = (wn + (fftw_real)i * wn) + vec_scale * vx[idx];
-	// 	    float cordy2 = (hn + (fftw_real)j * hn) + vec_scale * vy[idx];
+	// 	    
 	// 	    float cordx3 = (cordx1 + cordx2)/2;
 	// 	    float cordy3 = (cordy1 + cordy2)/2;
 	// 		float angle = atan2(vy[idx],vx[idx])*180/3.1415	;
@@ -430,24 +430,13 @@ void visualize()
 	// 	}
 	// }
 	// glEnd();
-
-
-
-
-
-		glBegin(GL_TRIANGLES);
-	 //  	glEnable(GL_LIGHTING);
-		// glEnable(GL_LIGHT0);
-		// glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-		// glEnable(GL_DEPTH_TEST);
-		// glEnable(GL_COLOR_MATERIAL);
-		glMatrixMode(GL_MODELVIEW);
 		
 		for (i = 0; i < DIM-1; i++){
 	    	for (j = 0; j < DIM-1; j++){	
 
 	    		px = wn + (fftw_real)i * wn;
 				py = hn + (fftw_real)(j + 1) * hn;
+
 				idx = ((j + 1) * DIM) + i;
 
 				vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
@@ -456,25 +445,48 @@ void visualize()
 
 				set_colormap(length, scalar_col,NCOLORS,0);
 
-				float radius = length*vec_scale;	
+				float radius = length*vec_scale;
 				float angle = atan2(vy[idx],vx[idx])*180/3.1415	;
 
 				glPushMatrix();									
-				glTranslatef(px, py,0);						
+				glTranslatef(px, py,1);						
 				glRotatef(90-angle,0,0,-1);
 				glRotatef(-90,1,0,0);
-				glutSolidCone(radius/4,radius,10,10);		
+				glutWireCone(radius/4,radius,10,10);		
 				glPopMatrix();
 			}
-		}
+	}
 
-		// glDisable(GL_LIGHTING);
-		glEnd();
-		glutSwapBuffers();
+	if (draw_for)
+		
+		for (i = 0; i < DIM-1; i++){
+	    	for (j = 0; j < DIM-1; j++){	
 
+	    		px = wn + (fftw_real)i * wn;
+				py = hn + (fftw_real)(j + 1) * hn;
 
+				idx = ((j + 1) * DIM) + i;
+
+				for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
+
+				float length = (for_mod - min_f)/(max_f - min_f);
+
+				set_colormap(length, scalar_col,NCOLORS,0);
+
+				float radius = length*vec_scale;
+				float angle = atan2(fy[idx],fx[idx])*180/3.1415	;
+
+				glPushMatrix();									
+				glTranslatef(px, py,1);						
+				glRotatef(90-angle,0,0,-1);
+				glRotatef(-90,1,0,0);
+				glutWireCone(radius/4,radius,10,10);		
+				glPopMatrix();
+			}
+		}			
 
 }
+
 void draw_color_legend(){
 	switch (color_dir)
 	{
