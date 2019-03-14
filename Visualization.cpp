@@ -409,28 +409,6 @@ void visualize()
 
 	if (draw_vecs)
 		
-	// glBegin(GL_TRIANGLES);//draw velocities
-	// for (i = 0; i < DIM; i++){
-	// 	for (j = 0; j < DIM; j++)
-	// 	{
-	// 	   	idx = (j * DIM) + i;
-	// 	    set_colormap( 0.5*rho[idx], scalar_col,NCOLORS,  0);  
-	// 	    direction_to_color(vx[idx],vy[idx],color_dir);
-	// 	    float cordx1 = wn + (fftw_real)i * wn;
-	// 	    float cordy1 = hn + (fftw_real)j * hn;
-	// 	    
-	// 	    float cordx3 = (cordx1 + cordx2)/2;
-	// 	    float cordy3 = (cordy1 + cordy2)/2;
-	// 		float angle = atan2(vy[idx],vx[idx])*180/3.1415	;
-	// 		glRotatef(90-angle,0,0,-1);
-	// 		glRotatef(-90,1,0,0);
-	// 		glVertex2f(cordx1, cordy1);
-	// 		glVertex2f(cordx2, cordy2);
-	// 		glVertex2f(cordx3 + 10, cordy3 + 10);
-	// 	}
-	// }
-	// glEnd();
-		
 		for (i = 0; i < DIM-1; i++){
 	    	for (j = 0; j < DIM-1; j++){	
 
@@ -455,7 +433,7 @@ void visualize()
 				glutWireCone(radius/4,radius,10,10);		
 				glPopMatrix();
 			}
-	}
+		}	
 
 	if (draw_for)
 		

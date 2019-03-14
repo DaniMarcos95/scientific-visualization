@@ -33,6 +33,9 @@ GLUI_Spinner *spinnerNumberColors;
 int main_window;
 int colorMapIndex;
 int datasetIndex;
+int scalarIndex;
+int vectorIndex;
+int glyphIndex;
 int numberOfColors = 255;
 float max_clamped = 0;
 float min_clamped = 10;
@@ -45,7 +48,8 @@ extern float min_f;
 extern fftw_real  hn;
 GLUI_EditText *maxClamped;
 GLUI_EditText *minClamped;
-int aux_repetition = -1;
+int aux_repetition_scalar = -1;
+int aux_repetition_vector = -1;
 
 //display: Handle window redrawing events. Simply delegates to visualize().
 
@@ -112,72 +116,83 @@ void display(void)
 	glFlush();
 	glutSwapBuffers();
 
-	int repetition = -1;
+	int repetition_scalar = -1;
+	int repetition_vector = -1;
 
-	switch(datasetIndex){
-		case 0: repetition = 0;
-				draw_vecs = 0;
-				draw_for = 0;
+	switch(scalarIndex){
+		case 0: repetition_scalar = 0;
 				draw_rho = 1;
 				draw_vec_mod = 0;
 				draw_for_mod = 0;
-				if(repetition != aux_repetition){
+				if(repetition_scalar != aux_repetition_scalar){
 					if(max_rho < min_rho){
 						max_rho = 10;
 						min_rho = 0;
 					}
 					maxClamped->set_float_val(max_rho);
 					minClamped->set_float_val(min_rho);
-					aux_repetition = repetition;
+					aux_repetition_scalar = repetition_scalar;
 				}
 				break;
-		case 1: repetition = 1;
-				draw_vecs = 0;
-				draw_for = 0;
+		case 1: repetition_scalar = 1;
 				draw_rho = 0;
 				draw_vec_mod = 1;
 				draw_for_mod = 0;
-				if(repetition != aux_repetition){
+				if(repetition_scalar != aux_repetition_scalar){
 					maxClamped->set_float_val(max_v);
 					minClamped->set_float_val(min_v);
-					aux_repetition = repetition;
+					aux_repetition_scalar = repetition_scalar;
 				}
 				break;
-		case 2:	repetition = 2;
-				draw_vecs = 0;
-				draw_for = 0;
+		case 2:	repetition_scalar = 2;
 				draw_rho = 0;
 				draw_vec_mod = 0;
 				draw_for_mod = 1;
-				if(repetition != aux_repetition){
+				if(repetition_scalar != aux_repetition_scalar){
 					maxClamped->set_float_val(max_f);
 					minClamped->set_float_val(min_f);
-					aux_repetition = repetition;
+					aux_repetition_scalar = repetition_scalar;
 				}
 				break;
-		case 3: repetition = 3;
+		case 3:	repetition_scalar = 3;
+				draw_rho = 0;
+				draw_vec_mod = 0;
+				draw_for_mod = 0;
+				if(repetition_scalar != aux_repetition_scalar){
+					maxClamped->set_float_val(max_f);
+					minClamped->set_float_val(min_f);
+					aux_repetition_scalar = repetition_scalar;
+				}
+				break;
+	}
+
+	switch(vectorIndex){
+		case 0: repetition_vector = 0;
 				draw_vecs = 1;
 				draw_for = 0;
-				draw_rho = 0;
-				draw_vec_mod = 1;
-				draw_for_mod = 0;
-				if(repetition != aux_repetition){
-					maxClamped->set_float_val(max_rho);
-					minClamped->set_float_val(min_rho);
-					aux_repetition = repetition;
-				}
+				// if(repetition_vector != aux_repetition_vector){
+				// 	maxClamped->set_float_val(max_rho);
+				// 	minClamped->set_float_val(min_rho);
+				// 	aux_repetition_vector = repetition_vector;
+				// }	
 				break;
-		case 4: repetition = 3;
+		case 1: repetition_vector = 1;
 				draw_vecs = 0;
 				draw_for = 1;
-				draw_rho = 0;
-				draw_vec_mod = 1;
-				draw_for_mod = 0;
-				if(repetition != aux_repetition){
-					maxClamped->set_float_val(max_rho);
-					minClamped->set_float_val(min_rho);
-					aux_repetition = repetition;
-				}
+				// if(repetition_vector != aux_repetition_vector){
+				// 	maxClamped->set_float_val(max_rho);
+				// 	minClamped->set_float_val(min_rho);
+				// 	aux_repetition_vector = repetition_vector;
+				// }
+				break;
+		case 2: repetition_vector = 2;
+				draw_vecs = 0;
+				draw_for = 0;
+				// if(repetition_vector != aux_repetition_vector){
+				// 	maxClamped->set_float_val(max_rho);
+				// 	minClamped->set_float_val(min_rho);
+				// 	aux_repetition_vector = repetition_vector;
+				// }
 				break;
 	}
 
@@ -194,6 +209,13 @@ void display(void)
 	}
 }
 
+void scaleGlyphUp(){
+	vec_scale *= 1.2;
+}
+
+void scaleGlyphDown(){
+	vec_scale *= 0.8;
+}
 //reshape: Handle window resizing (reshaping) events
 void reshape(int w, int h)
 {
@@ -301,12 +323,18 @@ int main(int argc, char **argv, int NLEVELS)
 
 	GLUI_Panel *datasetPanel = new GLUI_Panel(panel1, "Dataset");
 
-	GLUI_RadioGroup *radioDataset = new GLUI_RadioGroup(datasetPanel, &datasetIndex);
-	GLUI_RadioButton *buttonDensity = new GLUI_RadioButton( radioDataset, "rho" );
-	GLUI_RadioButton *buttonVecMod = new GLUI_RadioButton( radioDataset, "||v||" );
-	GLUI_RadioButton *buttonForMod = new GLUI_RadioButton( radioDataset, "||f||" );
-	GLUI_RadioButton *buttonVelocity = new GLUI_RadioButton( radioDataset, "v" );
-	GLUI_RadioButton *buttonForces = new GLUI_RadioButton( radioDataset, "f" );
+	GLUI_RadioGroup *radioScalar = new GLUI_RadioGroup(datasetPanel, &scalarIndex);
+	GLUI_RadioButton *buttonDensity = new GLUI_RadioButton( radioScalar, "rho" );
+	GLUI_RadioButton *buttonVecMod = new GLUI_RadioButton( radioScalar, "||v||" );
+	GLUI_RadioButton *buttonForMod = new GLUI_RadioButton( radioScalar, "||f||" );
+	GLUI_RadioButton *buttonNoneScalar = new GLUI_RadioButton( radioScalar, "None" );
+
+	glui->add_column_to_panel(datasetPanel, true);
+
+	GLUI_RadioGroup *radioVectors = new GLUI_RadioGroup(datasetPanel, &vectorIndex);
+	GLUI_RadioButton *buttonVelocity = new GLUI_RadioButton( radioVectors, "v" );
+	GLUI_RadioButton *buttonForces = new GLUI_RadioButton( radioVectors, "f" );
+	GLUI_RadioButton *buttonNoneVectors = new GLUI_RadioButton( radioVectors, "None" );
 
 	glui->add_column_to_panel(panel1, true);
 
@@ -328,6 +356,18 @@ int main(int argc, char **argv, int NLEVELS)
 	maxClamped = new GLUI_EditText(scalingPanel, "Maximum value for clamping:", &max_clamped);
 
 	minClamped = new GLUI_EditText(scalingPanel, "Minimum value for clamping:", &min_clamped);
+
+	GLUI_Panel *glyphPanel = new GLUI_Panel(mainPanel, "Glyphs");
+
+	GLUI_RadioGroup *glyphMode = new GLUI_RadioGroup(glyphPanel, &glyphIndex);
+	GLUI_RadioButton *lines = new GLUI_RadioButton( glyphMode, "Lines" );
+	GLUI_RadioButton *cones = new GLUI_RadioButton( glyphMode, "Cones" );
+	GLUI_RadioButton *arrows = new GLUI_RadioButton( glyphMode, "Arrows" );
+
+	glui->add_column_to_panel(glyphPanel, true);
+
+	GLUI_Button *glyphScaleUp = new GLUI_Button(glyphPanel, "Scale Up", -1, (GLUI_Update_CB)scaleGlyphUp);
+	GLUI_Button *glyphScaleDown = new GLUI_Button(glyphPanel, "Scale Down", -1, (GLUI_Update_CB)scaleGlyphDown);
 
 	glui->set_main_gfx_window(main_window);
 	init_simulation(DIM);	//initialize the simulation data structures
