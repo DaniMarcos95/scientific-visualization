@@ -408,27 +408,63 @@ void visualize()
 
 	if (draw_vecs)
 		
-	  glBegin(GL_TRIANGLES);//draw velocities
-	  for (i = 0; i < DIM; i++)
-	    for (j = 0; j < DIM; j++)
-	    {
-		  idx = (j * DIM) + i;
-		  set_colormap( 0.5*rho[idx], scalar_col,NCOLORS,  0);  
-		  direction_to_color(vx[idx],vy[idx],color_dir);
-		  float cordx1 = wn + (fftw_real)i * wn;
-		  float cordy1 = hn + (fftw_real)j * hn;
-		  float cordx2 = (wn + (fftw_real)i * wn) + vec_scale * vx[idx];
-		  float cordy2 = (hn + (fftw_real)j * hn) + vec_scale * vy[idx];
-		  float cordx3 = (cordx1 + cordx2)/2;
-		  float cordy3 = (cordy1 + cordy2)/2;
-		  glVertex2f(cordx1, cordy1);
-		  glVertex2f(cordx2, cordy2);
-		  glVertex2f(cordx3 + 10, cordy3 + 10);
-	    }
-	  glEnd();
-	
-	// draw_color_legend();
-	// render();
+	  // glBegin(GL_TRIANGLES);//draw velocities
+	  // for (i = 0; i < DIM; i++)
+	  //   for (j = 0; j < DIM; j++)
+	  //   {
+		 //  idx = (j * DIM) + i;
+		 //  set_colormap( 0.5*rho[idx], scalar_col,NCOLORS,  0);  
+		 //  direction_to_color(vx[idx],vy[idx],color_dir);
+		 //  float cordx1 = wn + (fftw_real)i * wn;
+		 //  float cordy1 = hn + (fftw_real)j * hn;
+		 //  float cordx2 = (wn + (fftw_real)i * wn) + vec_scale * vx[idx];
+		 //  float cordy2 = (hn + (fftw_real)j * hn) + vec_scale * vy[idx];
+		 //  float cordx3 = (cordx1 + cordx2)/2;
+		 //  float cordy3 = (cordy1 + cordy2)/2;
+		 //  glVertex2f(cordx1, cordy1);
+		 //  glVertex2f(cordx2, cordy2);
+		 //  glVertex2f(cordx3 + 10, cordy3 + 10);
+	  //   }
+	  // glEnd();
+		glBegin(GL_TRIANGLES);
+	  	glEnable(GL_LIGHTING);
+		glEnable(GL_LIGHT0);
+		glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_COLOR_MATERIAL);
+		glMatrixMode(GL_MODELVIEW);
+		
+		for (i = 0; i < DIM-1; i++){
+	    	for (j = 0; j < DIM-1; j++){	
+
+	    		px = wn + (fftw_real)i * wn;
+				py = hn + (fftw_real)(j + 1) * hn;
+				idx = ((j + 1) * DIM) + i;
+
+				vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
+
+				float length = (vec_mod - min_v)/(max_v - min_v);
+
+				set_colormap(length, scalar_col,NCOLORS,0);
+
+				float radius = length*vec_scale;	
+				float angle = atan2(vy[idx],vx[idx])*180/3.1415	;
+
+				glPushMatrix();									
+				glTranslatef(px, py,0);						
+				glRotatef(90-angle,0,0,-1);
+				glRotatef(-90,1,0,0);
+				glutSolidCone(radius/4,radius,30,30);		
+				glPopMatrix();
+			}
+		}
+
+		glDisable(GL_LIGHTING);
+		glEnd();
+		glutSwapBuffers();
+
+
+
 }
 void draw_color_legend(){
 	switch (color_dir)
