@@ -50,6 +50,7 @@ GLUI_EditText *maxClamped;
 GLUI_EditText *minClamped;
 int aux_repetition_scalar = -1;
 int aux_repetition_vector = -1;
+int numberOfSamples = 50;
 
 //display: Handle window redrawing events. Simply delegates to visualize().
 
@@ -95,7 +96,7 @@ void display(void)
 	float stepSize = (float)(winHeight - 2 *hn) / (float) NCOLORS;
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+	// glLoadIdentity();
 	visualize();
 
 	int bar_width = 40;
@@ -121,7 +122,7 @@ void display(void)
 
 	switch(scalarIndex){
 		case 0: repetition_scalar = 0;
-				draw_rho = 1;
+				draw_rho = 0;
 				draw_vec_mod = 0;
 				draw_for_mod = 0;
 				if(repetition_scalar != aux_repetition_scalar){
@@ -136,7 +137,7 @@ void display(void)
 				break;
 		case 1: repetition_scalar = 1;
 				draw_rho = 0;
-				draw_vec_mod = 1;
+				draw_vec_mod = 0;
 				draw_for_mod = 0;
 				if(repetition_scalar != aux_repetition_scalar){
 					maxClamped->set_float_val(max_v);
@@ -147,7 +148,7 @@ void display(void)
 		case 2:	repetition_scalar = 2;
 				draw_rho = 0;
 				draw_vec_mod = 0;
-				draw_for_mod = 1;
+				draw_for_mod = 0;
 				if(repetition_scalar != aux_repetition_scalar){
 					maxClamped->set_float_val(max_f);
 					minClamped->set_float_val(min_f);
@@ -221,8 +222,13 @@ void reshape(int w, int h)
 {
  	glViewport(0.0f, 0.0f, (GLfloat)w, (GLfloat)h);
 	glMatrixMode(GL_PROJECTION);
+	glClearDepth(1.0);
+	glDepthFunc(GL_LESS);
+	glEnable(GL_DEPTH_TEST);
+	glShadeModel(GL_SMOOTH);
 	glLoadIdentity();
-	gluOrtho2D(0.0, (GLdouble)w, 0.0, (GLdouble)h);
+	glOrtho(0.0, (GLdouble)w, 0.0, (GLdouble)h, -1000, 1000);
+	glMatrixMode(GL_MODELVIEW);
 	winWidth = w; winHeight = h;
 }
 
@@ -369,8 +375,17 @@ int main(int argc, char **argv, int NLEVELS)
 	GLUI_Button *glyphScaleUp = new GLUI_Button(glyphPanel, "Scale Up", -1, (GLUI_Update_CB)scaleGlyphUp);
 	GLUI_Button *glyphScaleDown = new GLUI_Button(glyphPanel, "Scale Down", -1, (GLUI_Update_CB)scaleGlyphDown);
 
+
+	GLUI_EditText *setNumberOfSamples = new GLUI_EditText(mainPanel, "Number of samples(10-50):", &numberOfSamples);
+	setNumberOfSamples->set_int_val(50);
+	setNumberOfSamples->set_int_limits( 1, 50, GLUI_LIMIT_CLAMP );
+
+	GLUI_Button *Exit = new GLUI_Button(mainPanel, "Exit", -1, (GLUI_Update_CB)exit);
+
 	glui->set_main_gfx_window(main_window);
 	init_simulation(DIM);	//initialize the simulation data structures
 	glutMainLoop();			//calls do_one_simulation_step, keyboard, display, drag, reshape
 	return 0;
 }
+
+

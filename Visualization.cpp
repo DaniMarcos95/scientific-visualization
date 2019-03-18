@@ -51,6 +51,9 @@ extern float min_v;
 extern float max_clamped;
 extern float min_clamped;
 fftw_real  hn;
+extern int scalarIndex;
+extern int glyphIndex;
+extern int numberOfSamples;
 
 //convert RGB values to HSV
 void rgb2hsv(float r, float g, float b,
@@ -407,35 +410,92 @@ void visualize()
 	}
 	
 
-	if (draw_vecs)
+	if (draw_vecs){
+
+		glEnable(GL_LIGHTING);
+		glEnable(GL_COLOR_MATERIAL);
+		glEnable(GL_LIGHT0);
 		
-		for (i = 0; i < DIM-1; i++){
-	    	for (j = 0; j < DIM-1; j++){	
+		if(glyphIndex == 0){
+			glBegin(GL_LINES);
+		}
+
+		for (i = 0; i < DIM-1; i += DIM/numberOfSamples){
+	    	for (j = 0; j < DIM-1; j += DIM/numberOfSamples){	
 
 	    		px = wn + (fftw_real)i * wn;
 				py = hn + (fftw_real)(j + 1) * hn;
 
 				idx = ((j + 1) * DIM) + i;
-
-				vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
-
-				float length = (vec_mod - min_v)/(max_v - min_v);
-
+				float length = 0;
+				switch(scalarIndex){
+					case 0: length = rho[idx];
+							break;
+					case 1: vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
+							// length = (vec_mod - min_v)/(max_v - min_v);
+							length = vec_mod;
+							break;
+					case 2: for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
+							// length = (for_mod - min_f)/(max_f - min_f);
+							break;
+				}
 				set_colormap(length, scalar_col,NCOLORS,0);
 
 				float radius = length*vec_scale;
 				float angle = atan2(vy[idx],vx[idx])*180/3.1415	;
 
-				glPushMatrix();									
-				glTranslatef(px, py,1);						
-				glRotatef(90-angle,0,0,-1);
-				glRotatef(-90,1,0,0);
-				glutWireCone(radius/4,radius,10,10);		
-				glPopMatrix();
+				GLUquadricObj *quadric = gluNewQuadric();
+
+				switch(glyphIndex){
+					case 0:	direction_to_color(vx[idx],vy[idx],scalar_col);
+						    glVertex2f(wn + (fftw_real)i * wn, hn + (fftw_real)j * hn);
+						    glVertex2f((wn + (fftw_real)i * wn) + vec_scale * vx[idx], (hn + (fftw_real)j * hn) + vec_scale * vy[idx]);
+						    
+							break;
+
+					case 1: glTranslatef(px, py,1);						
+							glRotatef(90-angle,0,0,-1);
+							glRotatef(-90,1,0,0);
+
+							glScalef(1.0,1.0,1.0);
+
+							gluCylinder(quadric, radius/3, 0, radius, 4, 4);
+
+							gluDeleteQuadric(quadric);
+			                glLoadIdentity();
+
+			                break;
+
+			        case 2:	glTranslatef(px, py,1);						
+							glRotatef(90-angle,0,0,-1);
+							glRotatef(-90,1,0,0);
+
+							// ARROW
+							glTranslated(0,0,radius);
+							gluCylinder(quadric, radius/3, 0, radius, 4,4);
+							glTranslated(0,0,-radius);
+							gluCylinder(quadric, radius/20, radius/20, radius, 4, 4);
+
+							//Line
+							glTranslatef(px, py,1);						
+							glRotatef(90-angle,0,0,-1);
+							glRotatef(-90,1,0,0);
+							gluDeleteQuadric(quadric);
+							glLoadIdentity();
+				}
 			}
 		}	
 
-	if (draw_for)
+		if(glyphIndex == 0){
+			glEnd();
+		}
+	}
+
+	if (draw_for){
+
+		glEnable(GL_LIGHTING);
+		glEnable(GL_COLOR_MATERIAL);
+		glEnable(GL_LIGHT0);
 		
 		for (i = 0; i < DIM-1; i++){
 	    	for (j = 0; j < DIM-1; j++){	
@@ -445,23 +505,62 @@ void visualize()
 
 				idx = ((j + 1) * DIM) + i;
 
-				for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
-
-				float length = (for_mod - min_f)/(max_f - min_f);
+				float length = 0;
+				switch(scalarIndex){
+					case 0: length = rho[idx];
+							break;
+					case 1: vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
+							// length = (vec_mod - min_v)/(max_v - min_v);
+							length = vec_mod;
+							break;
+					case 2: for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
+							// length = (for_mod - min_f)/(max_f - min_f);
+							break;
+				}
 
 				set_colormap(length, scalar_col,NCOLORS,0);
 
 				float radius = length*vec_scale;
 				float angle = atan2(fy[idx],fx[idx])*180/3.1415	;
 
-				glPushMatrix();									
+				GLUquadricObj *quadric = gluNewQuadric();
+
+				// glTranslatef(px, py,1);						
+				// glRotatef(90-angle,0,0,-1);
+				// glRotatef(-90,1,0,0);
+
+				// glScalef(1.0,1.0,1.0);
+
+				// gluCylinder(quadric, radius/3, 0, radius, 4, 4);
+
+				// gluDeleteQuadric(quadric);
+    //             glLoadIdentity();
+
+
+
+
+
+
+             	glTranslatef(px, py,1);						
+				glRotatef(90-angle,0,0,-1);
+				glRotatef(-90,1,0,0);
+
+				// ARROW
+				glTranslated(0,0,radius);
+				gluCylinder(quadric, radius/3, 0, radius, 4,4);
+				glTranslated(0,0,-radius);
+				gluCylinder(quadric, radius/20, radius/20, radius, 4, 4);
+
+				//Line
 				glTranslatef(px, py,1);						
 				glRotatef(90-angle,0,0,-1);
 				glRotatef(-90,1,0,0);
-				glutWireCone(radius/4,radius,10,10);		
-				glPopMatrix();
+				gluDeleteQuadric(quadric);
+				glLoadIdentity();
 			}
-		}			
+		}	
+
+	}		
 
 }
 
