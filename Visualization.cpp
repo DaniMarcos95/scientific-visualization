@@ -14,9 +14,10 @@ extern fftw_real *rho;
 void visualize(void);
 int   winWidth, winHeight;	//size of the graphics window, in pixels 
 int   color_dir = 1;           //use direction color-coding or not 
-float vec_scale = 1000;			//scaling of hedgehogs 
+float vec_scale = 10;			//scaling of hedgehogs 
 int   draw_rho = 0;           //draw the smoke or not 
-int   draw_vecs = 1;            //draw the vector field or not 
+int draw_for = 0;
+int   draw_vecs = 0;            //draw the vector field or not 
 int draw_vec_mod = 0;
 int draw_for_mod = 0;
 // const int COLOR_BLACKWHITE=0;   //different types of color mapping: black-and-white, rainbow, banded
@@ -50,6 +51,9 @@ extern float min_v;
 extern float max_clamped;
 extern float min_clamped;
 fftw_real  hn;
+extern int scalarIndex;
+extern int glyphIndex;
+extern int numberOfSamples;
 
 //convert RGB values to HSV
 void rgb2hsv(float r, float g, float b,
@@ -406,30 +410,160 @@ void visualize()
 	}
 	
 
-	if (draw_vecs)
+	if (draw_vecs){
+
+		glEnable(GL_LIGHTING);
+		glEnable(GL_COLOR_MATERIAL);
+		glEnable(GL_LIGHT0);
 		
-	  glBegin(GL_TRIANGLES);//draw velocities
-	  for (i = 0; i < DIM; i++)
-	    for (j = 0; j < DIM; j++)
-	    {
-		  idx = (j * DIM) + i;
-		  set_colormap( 0.5*rho[idx], scalar_col,NCOLORS,  0);  
-		  direction_to_color(vx[idx],vy[idx],color_dir);
-		  float cordx1 = wn + (fftw_real)i * wn;
-		  float cordy1 = hn + (fftw_real)j * hn;
-		  float cordx2 = (wn + (fftw_real)i * wn) + vec_scale * vx[idx];
-		  float cordy2 = (hn + (fftw_real)j * hn) + vec_scale * vy[idx];
-		  float cordx3 = (cordx1 + cordx2)/2;
-		  float cordy3 = (cordy1 + cordy2)/2;
-		  glVertex2f(cordx1, cordy1);
-		  glVertex2f(cordx2, cordy2);
-		  glVertex2f(cordx3 + 10, cordy3 + 10);
-	    }
-	  glEnd();
-	
-	// draw_color_legend();
-	// render();
+		if(glyphIndex == 0){
+			glBegin(GL_LINES);
+		}
+
+		for (i = 0; i < DIM-1; i += DIM/numberOfSamples){
+	    	for (j = 0; j < DIM-1; j += DIM/numberOfSamples){	
+
+	    		px = wn + (fftw_real)i * wn;
+				py = hn + (fftw_real)(j + 1) * hn;
+
+				idx = ((j + 1) * DIM) + i;
+				float length = 0;
+				switch(scalarIndex){
+					case 0: length = rho[idx];
+							break;
+					case 1: vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
+							// length = (vec_mod - min_v)/(max_v - min_v);
+							length = vec_mod;
+							break;
+					case 2: for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
+							// length = (for_mod - min_f)/(max_f - min_f);
+							break;
+				}
+				set_colormap(length, scalar_col,NCOLORS,0);
+
+				float radius = length*vec_scale;
+				float angle = atan2(vy[idx],vx[idx])*180/3.1415	;
+
+				GLUquadricObj *quadric = gluNewQuadric();
+
+				switch(glyphIndex){
+					case 0:	direction_to_color(vx[idx],vy[idx],scalar_col);
+						    glVertex2f(wn + (fftw_real)i * wn, hn + (fftw_real)j * hn);
+						    glVertex2f((wn + (fftw_real)i * wn) + vec_scale * vx[idx], (hn + (fftw_real)j * hn) + vec_scale * vy[idx]);
+						    
+							break;
+
+					case 1: glTranslatef(px, py,1);						
+							glRotatef(90-angle,0,0,-1);
+							glRotatef(-90,1,0,0);
+
+							glScalef(1.0,1.0,1.0);
+
+							gluCylinder(quadric, radius/3, 0, radius, 4, 4);
+
+							gluDeleteQuadric(quadric);
+			                glLoadIdentity();
+
+			                break;
+
+			        case 2:	glTranslatef(px, py,1);						
+							glRotatef(90-angle,0,0,-1);
+							glRotatef(-90,1,0,0);
+
+							// ARROW
+							glTranslated(0,0,radius);
+							gluCylinder(quadric, radius/3, 0, radius, 4,4);
+							glTranslated(0,0,-radius);
+							gluCylinder(quadric, radius/20, radius/20, radius, 4, 4);
+
+							//Line
+							glTranslatef(px, py,1);						
+							glRotatef(90-angle,0,0,-1);
+							glRotatef(-90,1,0,0);
+							gluDeleteQuadric(quadric);
+							glLoadIdentity();
+				}
+			}
+		}	
+
+		if(glyphIndex == 0){
+			glEnd();
+		}
+	}
+
+	if (draw_for){
+
+		glEnable(GL_LIGHTING);
+		glEnable(GL_COLOR_MATERIAL);
+		glEnable(GL_LIGHT0);
+		
+		for (i = 0; i < DIM-1; i++){
+	    	for (j = 0; j < DIM-1; j++){	
+
+	    		px = wn + (fftw_real)i * wn;
+				py = hn + (fftw_real)(j + 1) * hn;
+
+				idx = ((j + 1) * DIM) + i;
+
+				float length = 0;
+				switch(scalarIndex){
+					case 0: length = rho[idx];
+							break;
+					case 1: vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
+							// length = (vec_mod - min_v)/(max_v - min_v);
+							length = vec_mod;
+							break;
+					case 2: for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
+							// length = (for_mod - min_f)/(max_f - min_f);
+							break;
+				}
+
+				set_colormap(length, scalar_col,NCOLORS,0);
+
+				float radius = length*vec_scale;
+				float angle = atan2(fy[idx],fx[idx])*180/3.1415	;
+
+				GLUquadricObj *quadric = gluNewQuadric();
+
+				// glTranslatef(px, py,1);						
+				// glRotatef(90-angle,0,0,-1);
+				// glRotatef(-90,1,0,0);
+
+				// glScalef(1.0,1.0,1.0);
+
+				// gluCylinder(quadric, radius/3, 0, radius, 4, 4);
+
+				// gluDeleteQuadric(quadric);
+    //             glLoadIdentity();
+
+
+
+
+
+
+             	glTranslatef(px, py,1);						
+				glRotatef(90-angle,0,0,-1);
+				glRotatef(-90,1,0,0);
+
+				// ARROW
+				glTranslated(0,0,radius);
+				gluCylinder(quadric, radius/3, 0, radius, 4,4);
+				glTranslated(0,0,-radius);
+				gluCylinder(quadric, radius/20, radius/20, radius, 4, 4);
+
+				//Line
+				glTranslatef(px, py,1);						
+				glRotatef(90-angle,0,0,-1);
+				glRotatef(-90,1,0,0);
+				gluDeleteQuadric(quadric);
+				glLoadIdentity();
+			}
+		}	
+
+	}		
+
 }
+
 void draw_color_legend(){
 	switch (color_dir)
 	{
