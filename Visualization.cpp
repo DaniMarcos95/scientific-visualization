@@ -6,8 +6,7 @@
 #include <string>
 
 using namespace std;
-
-const int DIM = 50;
+int DIM = 50;
 extern fftw_real *vx, *vy; 
 extern fftw_real *fx, *fy;	
 extern fftw_real *rho;
@@ -20,6 +19,8 @@ int draw_for = 0;
 int   draw_vecs = 0;            //draw the vector field or not 
 int draw_vec_mod = 0;
 int draw_for_mod = 0;
+int diver = 0;
+int temp_idx;
 // const int COLOR_BLACKWHITE=0;   //different types of color mapping: black-and-white, rainbow, banded
 const int COLOR_RAINBOW=1;
 const int COLOR_GRAYSCALE=0;
@@ -38,6 +39,14 @@ void rainbow_bar();
 void blue_to_yellow_bar();
 void grayscale_bar();
 float min(float x, float y);
+
+float delta    = 1;
+float scalar_x;
+float scalar_y; 
+float grad_x; 
+float grad_y; 
+float diverg; 
+
 void render();
 const float dx=0.8;
 int NCOLORS = 255;
@@ -53,7 +62,14 @@ extern float min_clamped;
 fftw_real  hn;
 extern int scalarIndex;
 extern int glyphIndex;
+extern int vectorIndex;
 extern int numberOfSamples;
+
+float array[50][50];
+float array2[50][50];
+float row[50];
+float col[50];
+
 
 //convert RGB values to HSV
 void rgb2hsv(float r, float g, float b,
@@ -331,9 +347,11 @@ void visualize()
 		px = wn + (fftw_real)i * wn;
 		py = hn + (fftw_real)j * hn;
 		idx = (j * DIM) + i;
-
+		
+		 
+		
 		vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
-		//set_colormap(vec_mod, scalar_col,NCOLORS,1);
+		set_colormap(vec_mod, scalar_col,NCOLORS,1);
 		glVertex2f(px,py);
 
 		for (i = 0; i < DIM - 1; i++)
@@ -341,15 +359,17 @@ void visualize()
 			px = wn + (fftw_real)i * wn;
 			py = hn + (fftw_real)(j + 1) * hn;
 			idx = ((j + 1) * DIM) + i;
-
+			
+			 
 			vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
 			set_colormap(vec_mod, scalar_col,NCOLORS,0);
+			
 
 			glVertex2f(px, py);
 			px = wn + (fftw_real)(i + 1) * wn;
 			py = hn + (fftw_real)j * hn;
 			idx = (j * DIM) + (i + 1);
-
+			 
 			vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
 			set_colormap(vec_mod, scalar_col,NCOLORS,0);
 			glVertex2f(px, py);
@@ -358,6 +378,8 @@ void visualize()
 		px = wn + (fftw_real)(DIM - 1) * wn;
 		py = hn + (fftw_real)(j + 1) * hn;
 		idx = ((j + 1) * DIM) + (DIM - 1);
+		
+		 
 		vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
 		set_colormap(vec_mod, scalar_col,NCOLORS,0);
 		glVertex2f(px, py);
@@ -437,17 +459,19 @@ void visualize()
 							break;
 					case 2: for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
 							// length = (for_mod - min_f)/(max_f - min_f);
+							length = for_mod;
 							break;
 				}
 				set_colormap(length, scalar_col,NCOLORS,0);
-
+				
+				
 				float radius = length*vec_scale;
-				float angle = atan2(vy[idx],vx[idx])*180/3.1415	;
-
+				float angle = atan2(fy[idx],fx[idx])*180/3.1415	;
 				GLUquadricObj *quadric = gluNewQuadric();
 
 				switch(glyphIndex){
 					case 0:	direction_to_color(vx[idx],vy[idx],scalar_col);
+							
 						    glVertex2f(wn + (fftw_real)i * wn, hn + (fftw_real)j * hn);
 						    glVertex2f((wn + (fftw_real)i * wn) + vec_scale * vx[idx], (hn + (fftw_real)j * hn) + vec_scale * vy[idx]);
 						    
@@ -561,8 +585,185 @@ void visualize()
 		}	
 
 	}		
+	if (diver){
+		switch(vectorIndex){
+			case 0:
+		for(int rowNumber = 0; rowNumber < DIM; rowNumber++)
+		{
+			
+		double row = vy[rowNumber];
+		
+		for(int colNumber = 0; colNumber < DIM; colNumber++)
+		{	if(rowNumber == DIM-1){
+		//array[rowNumber][colNumber] = vx[DIM*(rowNumber+1) + colNumber] - vx[(rowNumber)*DIM + colNumber];
+		array2[rowNumber][colNumber] = vy[DIM*(rowNumber+1) + colNumber] -vy[(rowNumber)*DIM + colNumber];}
+		else{
+		//array[rowNumber][colNumber] = vx[DIM*(rowNumber+1) + colNumber] - vx[(rowNumber*DIM) +colNumber];
+		array2[rowNumber][colNumber] = vy[DIM*(rowNumber+1) + colNumber] - vy[(rowNumber*DIM) +colNumber];}
+		}
+		}
+		
+		for(int colNumber = 0; colNumber < DIM; colNumber++)
+		{
+			
+		double col = vx[colNumber];
+		
+		for(int rowNumber = 0; rowNumber < DIM; rowNumber++)
+		{	if(colNumber == DIM-1){
+		array[colNumber][rowNumber] = vx[DIM*(colNumber+1) + rowNumber] - vx[(colNumber)*DIM + rowNumber];}
+		//array2[rowNumber][colNumber] = vy[DIM*(rowNumber+1) + colNumber] -vy[(rowNumber)*DIM + colNumber]}
+		else{
+		array[colNumber][rowNumber] = vx[DIM*(colNumber+1) + rowNumber] - vx[(colNumber*DIM) +rowNumber];
+		//array2[rowNumber][colNumber] = vy[DIM*(rowNumber+1) + colNumber] - vy[(rowNumber*DIM) +colNumber];}
+		}
+		}}
+		
+		for (j = 0; j < DIM - 1; j++)			//draw smoke
+	{
+		glBegin(GL_QUAD_STRIP);
 
-}
+		i = 0;
+		px = wn + (fftw_real)i * wn;
+		py = hn + (fftw_real)j * hn;
+		idx = (j * DIM) + i;
+		//temp_idx = (j * DIM) + (i+1);
+		
+		//scalar_x = vx[idx] - vx[temp_idx];
+		//scalar_y = vy[idx] - vy[temp_idx];
+		diverg = array[j][i] + array2[j][i];
+		set_colormap(diverg, scalar_col,NCOLORS,0);
+		glVertex2f(px,py);
+
+		for (i = 0; i < DIM - 1; i++)
+		{
+			px = wn + (fftw_real)i * wn;
+			py = hn + (fftw_real)(j + 1) * hn;
+			idx = ((j + 1) * DIM) + i;
+
+			
+		//temp_idx = ((j+2) * DIM) + (i+1);
+		
+		//scalar_x = vx[idx] - vx[temp_idx];
+		//scalar_y = vy[idx] - vy[temp_idx];
+		diverg = array[j][i] + array2[j][i];
+		set_colormap(diverg, scalar_col,NCOLORS,0);
+			
+
+			glVertex2f(px, py);
+			px = wn + (fftw_real)(i + 1) * wn;
+			py = hn + (fftw_real)j * hn;
+			idx = (j * DIM) + (i + 1);
+			//temp_idx = ((j+1)*DIM) + (i+1);
+			//scalar_x = vx[idx] - vx[temp_idx];
+			//scalar_y = vy[idx] - vy[temp_idx];
+			diverg = array[j][i] + array2[j][i];
+			set_colormap(diverg, scalar_col,NCOLORS,0);
+			
+			glVertex2f(px, py);
+		}
+
+		px = wn + (fftw_real)(DIM - 1) * wn;
+		py = hn + (fftw_real)(j + 1) * hn;
+		idx = ((j + 1) * DIM) + (DIM - 1);
+		//temp_idx = (((j+2)*DIM) + DIM -1);
+		//scalar_x = vx[idx] - vx[temp_idx];
+		//scalar_y = vy[idx] - vy[temp_idx];
+		diverg = array[j][i] + array2[j][i];
+		set_colormap(diverg, scalar_col,NCOLORS,0);
+		glVertex2f(px, py);
+		glEnd();
+	}
+		
+	break;
+	case 1: 
+	for(int rowNumber = 0; rowNumber < DIM; rowNumber++)
+		{
+			
+		double row = vy[rowNumber];
+		
+		for(int colNumber = 0; colNumber < DIM; colNumber++)
+		{	if(rowNumber == DIM-1){
+		//array[rowNumber][colNumber] = vx[DIM*(rowNumber+1) + colNumber] - vx[(rowNumber)*DIM + colNumber];
+		array2[rowNumber][colNumber] = fy[DIM*(rowNumber+1) + colNumber] -fy[(rowNumber)*DIM + colNumber];}
+		else{
+		//array[rowNumber][colNumber] = vx[DIM*(rowNumber+1) + colNumber] - vx[(rowNumber*DIM) +colNumber];
+		array2[rowNumber][colNumber] = fy[DIM*(rowNumber+1) + colNumber] - fy[(rowNumber*DIM) +colNumber];}
+		}
+		}
+		
+		for(int colNumber = 0; colNumber < DIM; colNumber++)
+		{
+			
+		double col = fx[colNumber];
+		
+		for(int rowNumber = 0; rowNumber < DIM; rowNumber++)
+		{	if(colNumber == DIM-1){
+		array[colNumber][rowNumber] = fx[DIM*(colNumber+1) + rowNumber] - fx[(colNumber)*DIM + rowNumber];}
+		//array2[rowNumber][colNumber] = vy[DIM*(rowNumber+1) + colNumber] -vy[(rowNumber)*DIM + colNumber]}
+		else{
+		array[colNumber][rowNumber] = fx[DIM*(colNumber+1) + rowNumber] - fx[(colNumber*DIM) +rowNumber];
+		//array2[rowNumber][colNumber] = vy[DIM*(rowNumber+1) + colNumber] - vy[(rowNumber*DIM) +colNumber];}
+		}
+		}}
+		
+		for (j = 0; j < DIM - 1; j++)			//draw smoke
+	{
+		glBegin(GL_QUAD_STRIP);
+
+		i = 0;
+		px = wn + (fftw_real)i * wn;
+		py = hn + (fftw_real)j * hn;
+		idx = (j * DIM) + i;
+		//temp_idx = (j * DIM) + (i+1);
+		
+		//scalar_x = vx[idx] - vx[temp_idx];
+		//scalar_y = vy[idx] - vy[temp_idx];
+		diverg = array[j][i] + array2[j][i];
+		set_colormap(diverg, scalar_col,NCOLORS,0);
+		glVertex2f(px,py);
+
+		for (i = 0; i < DIM - 1; i++)
+		{
+			px = wn + (fftw_real)i * wn;
+			py = hn + (fftw_real)(j + 1) * hn;
+			idx = ((j + 1) * DIM) + i;
+
+			
+		//temp_idx = ((j+2) * DIM) + (i+1);
+		
+		//scalar_x = vx[idx] - vx[temp_idx];
+		//scalar_y = vy[idx] - vy[temp_idx];
+		diverg = array[j][i] + array2[j][i];
+		set_colormap(diverg, scalar_col,NCOLORS,0);
+			
+
+			glVertex2f(px, py);
+			px = wn + (fftw_real)(i + 1) * wn;
+			py = hn + (fftw_real)j * hn;
+			idx = (j * DIM) + (i + 1);
+			//temp_idx = ((j+1)*DIM) + (i+1);
+			//scalar_x = vx[idx] - vx[temp_idx];
+			//scalar_y = vy[idx] - vy[temp_idx];
+			diverg = array[j][i] + array2[j][i];
+			set_colormap(diverg, scalar_col,NCOLORS,0);
+			
+			glVertex2f(px, py);
+		}
+
+		px = wn + (fftw_real)(DIM - 1) * wn;
+		py = hn + (fftw_real)(j + 1) * hn;
+		idx = ((j + 1) * DIM) + (DIM - 1);
+		//temp_idx = (((j+2)*DIM) + DIM -1);
+		//scalar_x = vx[idx] - vx[temp_idx];
+		//scalar_y = vy[idx] - vy[temp_idx];
+		diverg = array[j][i] + array2[j][i];
+		set_colormap(diverg, scalar_col,NCOLORS,0);
+		glVertex2f(px, py);
+		glEnd();
+	}
+	
+		break;}
+}}
 
 void draw_color_legend(){
 	switch (color_dir)
@@ -686,5 +887,4 @@ void grayscale_bar(){
 	glColor3f(0,0,0); 
 	glVertex2f(500,0);
 	glEnd();
-
 }

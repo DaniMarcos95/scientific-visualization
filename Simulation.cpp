@@ -7,7 +7,7 @@
 using namespace std;
 
 extern int frozen;
-const int DIM = 50;				//size of simulation grid
+extern int DIM;				//size of simulation grid
 double dt = 0.1;				//simulation time step
 float visc;				//fluid viscosity
 fftw_real *vx, *vy;             //(vx,vy)   = velocity field at the current moment
@@ -210,3 +210,4 @@ void do_one_simulation_step()
 	  glutPostRedisplay();
 	}
 }
+
