@@ -16,7 +16,8 @@ extern int   draw_vecs;
 extern int draw_for;
 extern int draw_vec_mod; 
 extern int draw_for_mod;   
-extern int NCOLORS;         
+extern int NCOLORS; 
+extern int diver;        
 const int COLOR_BLACKWHITE = 0;   
 const int COLOR_RAINBOW = 1;
 const int COLOR_GRAYSCALE = 0;
@@ -122,9 +123,13 @@ void display(void)
 
 	switch(scalarIndex){
 		case 0: repetition_scalar = 0;
-				draw_rho = 0;
+		
+			
+				draw_rho = 1;
 				draw_vec_mod = 0;
-				draw_for_mod = 0;
+			draw_for_mod = 0;
+			diver = 0;
+			
 				if(repetition_scalar != aux_repetition_scalar){
 					if(max_rho < min_rho){
 						max_rho = 10;
@@ -137,8 +142,9 @@ void display(void)
 				break;
 		case 1: repetition_scalar = 1;
 				draw_rho = 0;
-				draw_vec_mod = 0;
+				draw_vec_mod = 1;
 				draw_for_mod = 0;
+				diver = 0;
 				if(repetition_scalar != aux_repetition_scalar){
 					maxClamped->set_float_val(max_v);
 					minClamped->set_float_val(min_v);
@@ -148,7 +154,8 @@ void display(void)
 		case 2:	repetition_scalar = 2;
 				draw_rho = 0;
 				draw_vec_mod = 0;
-				draw_for_mod = 0;
+				draw_for_mod = 1;
+				diver = 0;
 				if(repetition_scalar != aux_repetition_scalar){
 					maxClamped->set_float_val(max_f);
 					minClamped->set_float_val(min_f);
@@ -159,10 +166,22 @@ void display(void)
 				draw_rho = 0;
 				draw_vec_mod = 0;
 				draw_for_mod = 0;
+				diver = 0;
 				if(repetition_scalar != aux_repetition_scalar){
 					maxClamped->set_float_val(max_f);
 					minClamped->set_float_val(min_f);
 					aux_repetition_scalar = repetition_scalar;
+				}
+				break;
+		case 4: repetition_scalar = 4;
+			draw_rho = 0;
+			draw_vec_mod = 0;
+			draw_for_mod = 0;
+			diver = 1;
+			if(repetition_scalar != aux_repetition_scalar){
+						maxClamped->set_float_val(max_f);
+						minClamped->set_float_val(min_f);
+						aux_repetition_scalar = repetition_scalar;
 				}
 				break;
 	}
@@ -171,29 +190,29 @@ void display(void)
 		case 0: repetition_vector = 0;
 				draw_vecs = 1;
 				draw_for = 0;
-				// if(repetition_vector != aux_repetition_vector){
-				// 	maxClamped->set_float_val(max_rho);
-				// 	minClamped->set_float_val(min_rho);
-				// 	aux_repetition_vector = repetition_vector;
-				// }	
+				 if(repetition_vector != aux_repetition_vector){
+				 	maxClamped->set_float_val(max_rho);
+				 	minClamped->set_float_val(min_rho);
+				 	aux_repetition_vector = repetition_vector;
+				 }	
 				break;
 		case 1: repetition_vector = 1;
 				draw_vecs = 0;
 				draw_for = 1;
-				// if(repetition_vector != aux_repetition_vector){
-				// 	maxClamped->set_float_val(max_rho);
-				// 	minClamped->set_float_val(min_rho);
-				// 	aux_repetition_vector = repetition_vector;
-				// }
+				 if(repetition_vector != aux_repetition_vector){
+				 	maxClamped->set_float_val(max_rho);
+				 	minClamped->set_float_val(min_rho);
+				 	aux_repetition_vector = repetition_vector;
+				 }
 				break;
 		case 2: repetition_vector = 2;
 				draw_vecs = 0;
 				draw_for = 0;
-				// if(repetition_vector != aux_repetition_vector){
-				// 	maxClamped->set_float_val(max_rho);
-				// 	minClamped->set_float_val(min_rho);
-				// 	aux_repetition_vector = repetition_vector;
-				// }
+				 if(repetition_vector != aux_repetition_vector){
+				 	maxClamped->set_float_val(max_rho);
+				 	minClamped->set_float_val(min_rho);
+				 	aux_repetition_vector = repetition_vector;
+				 }
 				break;
 	}
 
@@ -334,6 +353,8 @@ int main(int argc, char **argv, int NLEVELS)
 	GLUI_RadioButton *buttonVecMod = new GLUI_RadioButton( radioScalar, "||v||" );
 	GLUI_RadioButton *buttonForMod = new GLUI_RadioButton( radioScalar, "||f||" );
 	GLUI_RadioButton *buttonNoneScalar = new GLUI_RadioButton( radioScalar, "None" );
+	GLUI_RadioButton *buttonNoneDiver = new GLUI_RadioButton( radioScalar, "Divergence" );
+	
 
 	glui->add_column_to_panel(datasetPanel, true);
 
@@ -341,6 +362,7 @@ int main(int argc, char **argv, int NLEVELS)
 	GLUI_RadioButton *buttonVelocity = new GLUI_RadioButton( radioVectors, "v" );
 	GLUI_RadioButton *buttonForces = new GLUI_RadioButton( radioVectors, "f" );
 	GLUI_RadioButton *buttonNoneVectors = new GLUI_RadioButton( radioVectors, "None" );
+	
 
 	glui->add_column_to_panel(panel1, true);
 
@@ -376,7 +398,7 @@ int main(int argc, char **argv, int NLEVELS)
 	GLUI_Button *glyphScaleDown = new GLUI_Button(glyphPanel, "Scale Down", -1, (GLUI_Update_CB)scaleGlyphDown);
 
 
-	GLUI_EditText *setNumberOfSamples = new GLUI_EditText(mainPanel, "Number of samples(10-50):", &numberOfSamples);
+	GLUI_EditText *setNumberOfSamples = new GLUI_EditText(mainPanel, "Number of Samples (Dimension of Square) ", &numberOfSamples);
 	setNumberOfSamples->set_int_val(50);
 	setNumberOfSamples->set_int_limits( 1, 50, GLUI_LIMIT_CLAMP );
 
