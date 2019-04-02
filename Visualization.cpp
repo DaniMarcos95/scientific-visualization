@@ -832,3 +832,193 @@ void grayscale_bar(){
 	glVertex2f(500,0);
 	glEnd();
 }
+
+void compute_codes(){
+	for(int j = 0; j <= DIM-1; ++j)
+		{for(int i = 0; i <= DIM-1; ++i)
+		{//Get the coordinates of the cell vertices
+		char string1,string2,string3,string4, tempstr;
+		int idx1 = (j * DIM) + i;
+		int idx2 = (j * DIM) + (i + 1);
+		int idx3 = ((j + 1) * DIM) + i;
+		int idx4 = ((j + 1) * DIM) + (DIM - 1);
+		
+		
+		string1 = (rho[idx1] > test) ? '1' : '0';
+		string2 = (rho[idx2] > test) ?  '1' : '0';
+		//empstr = strcat(string1,string2);
+		string3 = (rho[idx3] > test) ?   '1' : '0';
+		//tempstr = strcat(tempstr,string3);
+		string4 = (rho[idx2] > test) ?  '1' : '0';
+		
+		isocodes[j][i] = string1 + string2 + string3 + string4;
+		
+		}
+		}
+		
+}
+
+void draw_isolines( ){
+	for(int j=0; j < DIM; ++j){
+		for(int i=0; i<DIM; ++i){
+			//Get cell vectors
+		int idx1 = (j * DIM) + i;
+		int idx2 = (j * DIM) + (i + 1);
+		int idx3 = ((j + 1) * DIM) + (i+1); //DIM -1
+		int idx4 = ((j + 1) * DIM) + i;
+		 
+		 //Get Cell edges
+		
+		float rat, rat2, rat3, rat4;	
+		
+		float ed1_x, ed2_x;
+		float ed1_y, ed2_y;
+		float ed3_x, ed3_y;
+		float ed4_x, ed4_y;
+			switch(isocodes[i][j]){
+				case '0001':
+				case '1110':
+				rat = ((rho[idx4] - rho[idx1]) != 0) ? ((idx4*(rho[idx4] -test) + idx1*(test-rho[idx1])) /(rho[idx4] - rho[idx1])) : 0; 
+				rat2 = ((rho[idx4] - rho[idx3]) != 0) ? ((idx4*(rho[idx4] -test) + idx3*(test-rho[idx3])) /(rho[idx4] - rho[idx3])) : 0; 
+				glBegin(GL_LINES);
+				ed1_x = ((j+1)*DIM);
+				ed1_y = (i+1) + ((i+1) - i)*rat;
+				glVertex2f(ed1_x,ed1_y);
+				
+				ed2_x = (j+1)*DIM + (i - (i+1))*rat2;
+				ed2_y = i;
+				glVertex2f(ed2_x,ed2_y);
+				glEnd();
+				break;
+				
+				case '0010':
+				case '1101':
+				rat = ((rho[idx3] - rho[idx4]) != 0) ? (idx3*(rho[idx3] -test) + idx4*(test-rho[idx4])) /(rho[idx3] - rho[idx4]) : 0; 
+				rat2 = ((rho[idx3] - rho[idx2]) != 0) ? (idx3*(rho[idx3] -test) + idx2*(test-rho[idx2]) /(rho[idx3] - rho[idx4])) : 0; 
+				glBegin(GL_LINES);
+				ed1_x = ((j+1)*DIM);
+				ed1_y = (i+1) + rat;
+				glVertex2f(ed1_x,ed1_y);
+				
+				ed2_x = (j+1)*DIM + rat2;
+				ed2_y = i;
+				glVertex2f(ed2_x,ed2_y);
+				glEnd();
+				break;
+				
+				case '0011':
+				case '1100':
+				rat = ((rho[idx4] - rho[idx1]) != 0) ? (idx4*(test-rho[idx4]) + idx1*(rho[idx1] - test))/(rho[idx4] - rho[idx1]) : 0; 
+				rat2 = ((rho[idx3] - rho[idx2])  != 0) ? (idx3*(test-rho[idx3]) + idx2*(rho[idx2] -test))/(rho[idx3] - rho[idx2]) : 0; 
+				glBegin(GL_LINES);
+				
+				ed1_x = (j+1)*DIM - rat;
+				ed1_y = i;
+				glVertex2f(ed1_x,ed1_y);
+				
+				ed2_x = (j+1)*DIM - rat2;
+				ed2_y = (i+1);
+				glVertex2f(ed2_x,ed2_y);
+				glEnd();
+				break;
+				
+				case '0100':
+				case '1011':
+				rat = ((rho[idx2] - rho[idx1]) != 0) ? (idx2*(rho[idx2] -test) + idx1*(test-rho[idx1]) /(rho[idx2] - rho[idx1])) : 0; 
+				rat2 = ((rho[idx2] - rho[idx3]) != 0) ? (idx2*(rho[idx2] -test) + idx3*(test-rho[idx3]) /(rho[idx2] - rho[idx3])) : 0; 
+				glBegin(GL_LINES);
+				ed1_x = j*DIM;
+				ed1_y = (i+1) - rat;
+				glVertex2f(ed1_x,ed1_y);
+				
+				ed2_x = (j+1)*DIM - rat2;
+				ed2_y = i;
+				glVertex2f(ed2_x,ed2_y);
+				glEnd();
+				break;
+				
+				case '0101':
+				
+				rat = ((rho[idx4] - rho[idx1]) != 0) ? (idx4*(rho[idx4] -test) + idx1*(test-rho[idx1]) /(rho[idx4] - rho[idx1])) : 0; 
+				rat2 = ((rho[idx4] - rho[idx3]) != 0) ? (idx4*(rho[idx4] - test) + idx3*(test - rho[idx3]) / (rho[idx4]- rho[idx3])) : 0;
+				rat3 = ((rho[idx2] - rho[idx3]) != 0) ? (idx2*(rho[idx2] -test) + idx3*(test-rho[idx3]) /(rho[idx2] - rho[idx3])) : 0; 
+				rat4 = ((rho[idx2] - rho[idx1]) != 0) ? (idx2*(rho[idx2] -test) + idx1*(test-rho[idx1]) /(rho[idx2] - rho[idx1])) : 0;
+				glBegin(GL_LINES);
+				ed1_x = (j+1)*DIM - rat;
+				ed1_y = i;
+				glVertex2f(ed1_x, ed1_y);
+				
+				ed2_x = (j+1)*DIM;
+				ed2_y = i + rat2;
+				glVertex2f(ed2_x, ed2_y);
+				
+				ed3_x = j*DIM + rat3;
+				ed3_y = i+1;
+				glVertex2f(ed3_x, ed3_y);
+				
+				ed4_x = j*DIM;
+				ed4_y = (i+1) - rat4;
+				glVertex2f(ed4_x,ed4_y);
+				glEnd();
+				break;
+				
+				case '0110':
+				case '1001':
+				rat = ((rho[idx2] - rho[idx1]) != 0) ? (idx2*(rho[idx2] -test) + idx1*(test-rho[idx1]) /(rho[idx2] - rho[idx1])) : 0; 
+				rat2 = ((rho[idx3] - rho[idx4]) != 0) ? (idx3*(rho[idx3] -test) + idx4*(test-rho[idx4]) /(rho[idx3] - rho[idx4])) : 0; 
+				glBegin(GL_LINES);
+				ed1_x = j*DIM;
+				ed1_y = (i+1) - rat;
+				glVertex2f(ed1_x,ed1_y);
+				
+				ed2_x = (j+1)*DIM;
+				ed2_y = i + rat2;
+				glVertex2f(ed2_x,ed2_y);
+				glEnd();
+				break;
+				
+				case '0111':
+				case '1000':
+				rat = ((rho[idx2] - rho[idx1]) != 0) ? (idx2*(rho[idx2] -test) + idx1*(test-rho[idx1]) /(rho[idx2] - rho[idx1])) : 0; 
+				rat2 = ((rho[idx4] - rho[idx1]) != 0) ? (idx4*(rho[idx4] -test) + idx1*(test-rho[idx1]) /(rho[idx4] - rho[idx1])) : 0; 
+				glBegin(GL_LINES);
+				ed1_x = j*DIM;
+				ed1_y = (i+1) - rat;
+				glVertex2f(ed1_x,ed1_y);
+				
+				ed2_x = j*DIM + rat2;
+				ed2_y = i;
+				glVertex2f(ed2_x,ed2_y);
+				glEnd();
+				break;
+				
+				case '1010':
+				rat = ((rho[idx1] - rho[idx2]) != 0) ? (idx1*(rho[idx1] -test) + idx2*(test-rho[idx2]) /(rho[idx1] - rho[idx2])) : 0; 
+				rat2 = ((rho[idx1] - rho[idx4]) != 0) ? (idx1*(rho[idx1] - test) + idx4*(test - rho[idx4]) / (rho[idx1]- rho[idx4])) : 0;
+				rat3 = ((rho[idx3] - rho[idx2]) != 0) ? (idx3*(rho[idx3] -test) + idx2*(test-rho[idx2]) /(rho[idx3] - rho[idx2])) : 0; 
+				rat4 = ((rho[idx3] - rho[idx4]) != 0) ? (idx3*(rho[idx3] -test) + idx4*(test-rho[idx4]) /(rho[idx3] - rho[idx4])) : 0;
+				glBegin(GL_LINES);
+				ed1_x = (j+1)*DIM;
+				ed1_y = i + rat;
+				glVertex2f(ed1_x, ed1_y);
+				
+				ed2_x = (j+1)*DIM - rat2;
+				ed2_y = i;
+				glVertex2f(ed2_x, ed2_y);
+				
+				ed3_x = j*DIM + rat3;
+				ed3_y = i+1;
+				glVertex2f(ed3_x, ed3_y);
+				
+				ed4_x = (j+1)*DIM;
+				ed4_y = (i+1) - rat4;
+				glVertex2f(ed4_x,ed4_y);
+				glEnd();
+				break;
+				
+				
+				}
+			
+		}
+	}
+}
