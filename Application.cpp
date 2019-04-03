@@ -37,6 +37,7 @@ int datasetIndex;
 int scalarIndex;
 int vectorIndex;
 int glyphIndex;
+int isolineselected;
 int numberOfColors = 255;
 float max_clamped = 0;
 float min_clamped = 10;
@@ -52,6 +53,7 @@ GLUI_EditText *minClamped;
 int aux_repetition_scalar = -1;
 int aux_repetition_vector = -1;
 int numberOfSamples = 50;
+float isovalue = 0;
 
 //display: Handle window redrawing events. Simply delegates to visualize().
 
@@ -174,14 +176,14 @@ void display(void)
 				}
 				break;
 		case 4: repetition_scalar = 4;
-			draw_rho = 0;
-			draw_vec_mod = 0;
-			draw_for_mod = 0;
-			diver = 1;
-			if(repetition_scalar != aux_repetition_scalar){
-						maxClamped->set_float_val(max_f);
-						minClamped->set_float_val(min_f);
-						aux_repetition_scalar = repetition_scalar;
+				draw_rho = 0;
+				draw_vec_mod = 0;
+				draw_for_mod = 0;
+				diver = 1;
+				if(repetition_scalar != aux_repetition_scalar){
+							maxClamped->set_float_val(max_f);
+							minClamped->set_float_val(min_f);
+							aux_repetition_scalar = repetition_scalar;
 				}
 				break;
 	}
@@ -401,6 +403,12 @@ int main(int argc, char **argv, int NLEVELS)
 	GLUI_EditText *setNumberOfSamples = new GLUI_EditText(mainPanel, "Number of Samples (Dimension of Square) ", &numberOfSamples);
 	setNumberOfSamples->set_int_val(50);
 	setNumberOfSamples->set_int_limits( 1, 50, GLUI_LIMIT_CLAMP );
+
+	GLUI_EditText *isovalueText = new GLUI_EditText(mainPanel, "Number of Samples (Dimension of Square) ", &isovalue);
+	setNumberOfSamples->set_int_val(0.0);
+
+	GLUI_RadioGroup *radioIsolines = new GLUI_RadioGroup(mainPanel, &isolineselected);
+	GLUI_RadioButton *buttonIsolines = new GLUI_RadioButton( radioIsolines, "Isolines" );
 
 	GLUI_Button *Exit = new GLUI_Button(mainPanel, "Exit", -1, (GLUI_Update_CB)exit);
 

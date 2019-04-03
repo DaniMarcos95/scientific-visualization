@@ -39,11 +39,13 @@ void rainbow_bar();
 void blue_to_yellow_bar();
 void grayscale_bar();
 float min(float x, float y);
-
+void compute_codes();
+void draw_isolines();
 
 float diverg; 
 float array[50][50];
 float array2[50][50];
+char isocodes[50][50];
 
 void render();
 const float dx=0.8;
@@ -62,6 +64,9 @@ extern int scalarIndex;
 extern int glyphIndex;
 extern int vectorIndex;
 extern int numberOfSamples;
+extern float isovalue;
+extern int isolineselected;
+
 
 
 
@@ -707,7 +712,13 @@ void visualize()
 	}
 	
 		break;}
-}}
+}	
+	
+	if(isolineselected == 0){
+		compute_codes();
+		draw_isolines();
+	}
+}
 
 void draw_color_legend(){
 	switch (color_dir)
@@ -844,12 +855,12 @@ void compute_codes(){
 		int idx4 = ((j + 1) * DIM) + (DIM - 1);
 		
 		
-		string1 = (rho[idx1] > test) ? '1' : '0';
-		string2 = (rho[idx2] > test) ?  '1' : '0';
+		string1 = (rho[idx1] > isovalue) ? '1' : '0';
+		string2 = (rho[idx2] > isovalue) ?  '1' : '0';
 		//empstr = strcat(string1,string2);
-		string3 = (rho[idx3] > test) ?   '1' : '0';
+		string3 = (rho[idx3] > isovalue) ?   '1' : '0';
 		//tempstr = strcat(tempstr,string3);
-		string4 = (rho[idx2] > test) ?  '1' : '0';
+		string4 = (rho[idx2] > isovalue) ?  '1' : '0';
 		
 		isocodes[j][i] = string1 + string2 + string3 + string4;
 		
@@ -857,6 +868,8 @@ void compute_codes(){
 		}
 		
 }
+
+
 
 void draw_isolines( ){
 	for(int j=0; j < DIM; ++j){
@@ -875,11 +888,12 @@ void draw_isolines( ){
 		float ed1_y, ed2_y;
 		float ed3_x, ed3_y;
 		float ed4_x, ed4_y;
+
 			switch(isocodes[i][j]){
 				case '0001':
 				case '1110':
-				rat = ((rho[idx4] - rho[idx1]) != 0) ? ((idx4*(rho[idx4] -test) + idx1*(test-rho[idx1])) /(rho[idx4] - rho[idx1])) : 0; 
-				rat2 = ((rho[idx4] - rho[idx3]) != 0) ? ((idx4*(rho[idx4] -test) + idx3*(test-rho[idx3])) /(rho[idx4] - rho[idx3])) : 0; 
+				rat = ((rho[idx4] - rho[idx1]) != 0) ? ((idx4*(rho[idx4] -isovalue) + idx1*(isovalue-rho[idx1])) /(rho[idx4] - rho[idx1])) : 0; 
+				rat2 = ((rho[idx4] - rho[idx3]) != 0) ? ((idx4*(rho[idx4] -isovalue) + idx3*(isovalue-rho[idx3])) /(rho[idx4] - rho[idx3])) : 0; 
 				glBegin(GL_LINES);
 				ed1_x = ((j+1)*DIM);
 				ed1_y = (i+1) + ((i+1) - i)*rat;
@@ -893,8 +907,8 @@ void draw_isolines( ){
 				
 				case '0010':
 				case '1101':
-				rat = ((rho[idx3] - rho[idx4]) != 0) ? (idx3*(rho[idx3] -test) + idx4*(test-rho[idx4])) /(rho[idx3] - rho[idx4]) : 0; 
-				rat2 = ((rho[idx3] - rho[idx2]) != 0) ? (idx3*(rho[idx3] -test) + idx2*(test-rho[idx2]) /(rho[idx3] - rho[idx4])) : 0; 
+				rat = ((rho[idx3] - rho[idx4]) != 0) ? (idx3*(rho[idx3] -isovalue) + idx4*(isovalue-rho[idx4])) /(rho[idx3] - rho[idx4]) : 0; 
+				rat2 = ((rho[idx3] - rho[idx2]) != 0) ? (idx3*(rho[idx3] -isovalue) + idx2*(isovalue-rho[idx2]) /(rho[idx3] - rho[idx4])) : 0; 
 				glBegin(GL_LINES);
 				ed1_x = ((j+1)*DIM);
 				ed1_y = (i+1) + rat;
@@ -908,8 +922,8 @@ void draw_isolines( ){
 				
 				case '0011':
 				case '1100':
-				rat = ((rho[idx4] - rho[idx1]) != 0) ? (idx4*(test-rho[idx4]) + idx1*(rho[idx1] - test))/(rho[idx4] - rho[idx1]) : 0; 
-				rat2 = ((rho[idx3] - rho[idx2])  != 0) ? (idx3*(test-rho[idx3]) + idx2*(rho[idx2] -test))/(rho[idx3] - rho[idx2]) : 0; 
+				rat = ((rho[idx4] - rho[idx1]) != 0) ? (idx4*(isovalue-rho[idx4]) + idx1*(rho[idx1] - isovalue))/(rho[idx4] - rho[idx1]) : 0; 
+				rat2 = ((rho[idx3] - rho[idx2])  != 0) ? (idx3*(isovalue-rho[idx3]) + idx2*(rho[idx2] -isovalue))/(rho[idx3] - rho[idx2]) : 0; 
 				glBegin(GL_LINES);
 				
 				ed1_x = (j+1)*DIM - rat;
@@ -924,8 +938,8 @@ void draw_isolines( ){
 				
 				case '0100':
 				case '1011':
-				rat = ((rho[idx2] - rho[idx1]) != 0) ? (idx2*(rho[idx2] -test) + idx1*(test-rho[idx1]) /(rho[idx2] - rho[idx1])) : 0; 
-				rat2 = ((rho[idx2] - rho[idx3]) != 0) ? (idx2*(rho[idx2] -test) + idx3*(test-rho[idx3]) /(rho[idx2] - rho[idx3])) : 0; 
+				rat = ((rho[idx2] - rho[idx1]) != 0) ? (idx2*(rho[idx2] -isovalue) + idx1*(isovalue-rho[idx1]) /(rho[idx2] - rho[idx1])) : 0; 
+				rat2 = ((rho[idx2] - rho[idx3]) != 0) ? (idx2*(rho[idx2] -isovalue) + idx3*(isovalue-rho[idx3]) /(rho[idx2] - rho[idx3])) : 0; 
 				glBegin(GL_LINES);
 				ed1_x = j*DIM;
 				ed1_y = (i+1) - rat;
@@ -939,10 +953,10 @@ void draw_isolines( ){
 				
 				case '0101':
 				
-				rat = ((rho[idx4] - rho[idx1]) != 0) ? (idx4*(rho[idx4] -test) + idx1*(test-rho[idx1]) /(rho[idx4] - rho[idx1])) : 0; 
-				rat2 = ((rho[idx4] - rho[idx3]) != 0) ? (idx4*(rho[idx4] - test) + idx3*(test - rho[idx3]) / (rho[idx4]- rho[idx3])) : 0;
-				rat3 = ((rho[idx2] - rho[idx3]) != 0) ? (idx2*(rho[idx2] -test) + idx3*(test-rho[idx3]) /(rho[idx2] - rho[idx3])) : 0; 
-				rat4 = ((rho[idx2] - rho[idx1]) != 0) ? (idx2*(rho[idx2] -test) + idx1*(test-rho[idx1]) /(rho[idx2] - rho[idx1])) : 0;
+				rat = ((rho[idx4] - rho[idx1]) != 0) ? (idx4*(rho[idx4] -isovalue) + idx1*(isovalue-rho[idx1]) /(rho[idx4] - rho[idx1])) : 0; 
+				rat2 = ((rho[idx4] - rho[idx3]) != 0) ? (idx4*(rho[idx4] - isovalue) + idx3*(isovalue - rho[idx3]) / (rho[idx4]- rho[idx3])) : 0;
+				rat3 = ((rho[idx2] - rho[idx3]) != 0) ? (idx2*(rho[idx2] -isovalue) + idx3*(isovalue-rho[idx3]) /(rho[idx2] - rho[idx3])) : 0; 
+				rat4 = ((rho[idx2] - rho[idx1]) != 0) ? (idx2*(rho[idx2] -isovalue) + idx1*(isovalue-rho[idx1]) /(rho[idx2] - rho[idx1])) : 0;
 				glBegin(GL_LINES);
 				ed1_x = (j+1)*DIM - rat;
 				ed1_y = i;
@@ -964,8 +978,8 @@ void draw_isolines( ){
 				
 				case '0110':
 				case '1001':
-				rat = ((rho[idx2] - rho[idx1]) != 0) ? (idx2*(rho[idx2] -test) + idx1*(test-rho[idx1]) /(rho[idx2] - rho[idx1])) : 0; 
-				rat2 = ((rho[idx3] - rho[idx4]) != 0) ? (idx3*(rho[idx3] -test) + idx4*(test-rho[idx4]) /(rho[idx3] - rho[idx4])) : 0; 
+				rat = ((rho[idx2] - rho[idx1]) != 0) ? (idx2*(rho[idx2] -isovalue) + idx1*(isovalue-rho[idx1]) /(rho[idx2] - rho[idx1])) : 0; 
+				rat2 = ((rho[idx3] - rho[idx4]) != 0) ? (idx3*(rho[idx3] -isovalue) + idx4*(isovalue-rho[idx4]) /(rho[idx3] - rho[idx4])) : 0; 
 				glBegin(GL_LINES);
 				ed1_x = j*DIM;
 				ed1_y = (i+1) - rat;
@@ -979,8 +993,8 @@ void draw_isolines( ){
 				
 				case '0111':
 				case '1000':
-				rat = ((rho[idx2] - rho[idx1]) != 0) ? (idx2*(rho[idx2] -test) + idx1*(test-rho[idx1]) /(rho[idx2] - rho[idx1])) : 0; 
-				rat2 = ((rho[idx4] - rho[idx1]) != 0) ? (idx4*(rho[idx4] -test) + idx1*(test-rho[idx1]) /(rho[idx4] - rho[idx1])) : 0; 
+				rat = ((rho[idx2] - rho[idx1]) != 0) ? (idx2*(rho[idx2] -isovalue) + idx1*(isovalue-rho[idx1]) /(rho[idx2] - rho[idx1])) : 0; 
+				rat2 = ((rho[idx4] - rho[idx1]) != 0) ? (idx4*(rho[idx4] -isovalue) + idx1*(isovalue-rho[idx1]) /(rho[idx4] - rho[idx1])) : 0; 
 				glBegin(GL_LINES);
 				ed1_x = j*DIM;
 				ed1_y = (i+1) - rat;
@@ -993,10 +1007,10 @@ void draw_isolines( ){
 				break;
 				
 				case '1010':
-				rat = ((rho[idx1] - rho[idx2]) != 0) ? (idx1*(rho[idx1] -test) + idx2*(test-rho[idx2]) /(rho[idx1] - rho[idx2])) : 0; 
-				rat2 = ((rho[idx1] - rho[idx4]) != 0) ? (idx1*(rho[idx1] - test) + idx4*(test - rho[idx4]) / (rho[idx1]- rho[idx4])) : 0;
-				rat3 = ((rho[idx3] - rho[idx2]) != 0) ? (idx3*(rho[idx3] -test) + idx2*(test-rho[idx2]) /(rho[idx3] - rho[idx2])) : 0; 
-				rat4 = ((rho[idx3] - rho[idx4]) != 0) ? (idx3*(rho[idx3] -test) + idx4*(test-rho[idx4]) /(rho[idx3] - rho[idx4])) : 0;
+				rat = ((rho[idx1] - rho[idx2]) != 0) ? (idx1*(rho[idx1] -isovalue) + idx2*(isovalue-rho[idx2]) /(rho[idx1] - rho[idx2])) : 0; 
+				rat2 = ((rho[idx1] - rho[idx4]) != 0) ? (idx1*(rho[idx1] - isovalue) + idx4*(isovalue - rho[idx4]) / (rho[idx1]- rho[idx4])) : 0;
+				rat3 = ((rho[idx3] - rho[idx2]) != 0) ? (idx3*(rho[idx3] -isovalue) + idx2*(isovalue-rho[idx2]) /(rho[idx3] - rho[idx2])) : 0; 
+				rat4 = ((rho[idx3] - rho[idx4]) != 0) ? (idx3*(rho[idx3] -isovalue) + idx4*(isovalue-rho[idx4]) /(rho[idx3] - rho[idx4])) : 0;
 				glBegin(GL_LINES);
 				ed1_x = (j+1)*DIM;
 				ed1_y = i + rat;
