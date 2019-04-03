@@ -181,68 +181,74 @@ void display(void)
 						}
 						break;
 			}
+			break;
 		case 1: 
 			switch(scalarVectorIndex){
-			case 0: repetition_scalar = 0;
-					draw_rho = 1;
-					draw_vec_mod = 0;
-					draw_for_mod = 0;
-					if(repetition_scalar != aux_repetition_scalar){
-						if(max_rho < min_rho){
-							max_rho = 10;
-							min_rho = 0;
-						}
-						maxClamped->set_float_val(max_rho);
-						minClamped->set_float_val(min_rho);
-						aux_repetition_scalar = repetition_scalar;
-					}
-					break;
-			case 1: repetition_scalar = 1;
-					draw_rho = 0;
-					draw_vec_mod = 1;
-					draw_for_mod = 0;
-					if(repetition_scalar != aux_repetition_scalar){
-						maxClamped->set_float_val(max_v);
-						minClamped->set_float_val(min_v);
-						aux_repetition_scalar = repetition_scalar;
-					}
-					break;
-			case 2:	repetition_scalar = 2;
-					draw_rho = 0;
-					draw_vec_mod = 0;
-					draw_for_mod = 1;
-					if(repetition_scalar != aux_repetition_scalar){
-						maxClamped->set_float_val(max_f);
-						minClamped->set_float_val(min_f);
-						aux_repetition_scalar = repetition_scalar;
-					}
-					break;
+				case 0: repetition_scalar = 0;
+						draw_rho = 1;
+						draw_vec_mod = 0;
+						draw_for_mod = 0;
+						if(scalingClampingIndex == 0){
+									maxClamped->set_float_val(0);
+									minClamped->set_float_val(0);
+							}else{
+								if(repetition_scalar != aux_repetition_scalar){
+									if(max_rho < min_rho){
+										max_rho = 10;
+										min_rho = 0;
+									}
+									maxClamped->set_float_val(10);
+									minClamped->set_float_val(0);
+									aux_repetition_scalar = repetition_scalar;
+								}
+							}
+						break;
+				case 1: repetition_scalar = 1;
+						draw_rho = 0;
+						draw_vec_mod = 1;
+						draw_for_mod = 0;
+						if(scalingClampingIndex == 0){
+									maxClamped->set_float_val(0);
+									minClamped->set_float_val(0);
+							}else{
+								if(repetition_scalar != aux_repetition_scalar){
+									maxClamped->set_float_val(0.02);
+									minClamped->set_float_val(0);
+									aux_repetition_scalar = repetition_scalar;
+								}
+							}
+						break;
+				case 2:	repetition_scalar = 2;
+						draw_rho = 0;
+						draw_vec_mod = 0;
+						draw_for_mod = 1;
+						if(scalingClampingIndex == 0){
+									maxClamped->set_float_val(0);
+									minClamped->set_float_val(0);
+							}else{
+								if(repetition_scalar != aux_repetition_scalar){
+									maxClamped->set_float_val(0.2);
+									minClamped->set_float_val(0);
+									aux_repetition_scalar = repetition_scalar;
+								}
+							}
+						break;
 			}
 
 			switch(vectorIndex){
 				case 0: repetition_vector = 0;
 						draw_vecs = 1;
 						draw_for = 0;
-						if(repetition_vector != aux_repetition_vector){
-							maxClamped->set_float_val(max_rho);
-							minClamped->set_float_val(min_rho);
-							aux_repetition_vector = repetition_vector;
-						}	
 						break;
 				case 1: repetition_vector = 1;
 						draw_vecs = 0;
 						draw_for = 1;
-						if(repetition_vector != aux_repetition_vector){
-						 	maxClamped->set_float_val(max_rho);
-						 	minClamped->set_float_val(min_rho);
-						 	aux_repetition_vector = repetition_vector;
-						}
 						break;
 			}
 
 			break;
 
-		case 2: 
+		case 3: 
 			switch(divergenceIndex){
 				case 0:
 					repetition_vector = 0;
@@ -267,7 +273,7 @@ void display(void)
 					// }
 					break;
 			}
-		case 3: 
+		case 4: 
 				break;//Height
 	}
 

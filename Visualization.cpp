@@ -47,7 +47,7 @@ float diverg;
 float array[50][50];
 float array2[50][50];
 char isocodes[50][50];
-
+float diverg_v[50][50];
 void render();
 const float dx=0.8;
 int NCOLORS = 255;
@@ -72,6 +72,7 @@ extern int isolineselected;
 extern int optionIndex;
 extern int divergenceIndex;
 extern int scalingClampingIndex;
+extern int scalarVectorIndex;
 
 
 
@@ -304,22 +305,23 @@ void visualize(){
         }
 	}
 
-	switch(scalarIndex){
-		case 0:
-			maxValue = max_rho;
-			minValue = min_rho;
-			break;
-		case 1:
-			maxValue = max_v;
-			minValue = min_v;
-			break;
-		case 2:
-			maxValue = max_f;
-			minValue = min_f;
-			break;
-	}
-
 	if(optionIndex == 0){
+
+		switch(scalarIndex){
+			case 0:
+				maxValue = max_rho;
+				minValue = min_rho;
+				break;
+			case 1:
+				maxValue = max_v;
+				minValue = min_v;
+				break;
+			case 2:
+				maxValue = max_f;
+				minValue = min_f;
+				break;
+		}
+
 		if (draw_rho){
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -451,6 +453,22 @@ void visualize(){
 	}
 
 	if(optionIndex == 1){
+
+		switch(scalarVectorIndex){
+				case 0:
+					maxValue = max_rho;
+					minValue = min_rho;
+					break;
+				case 1:
+					maxValue = max_v;
+					minValue = min_v;
+					break;
+				case 2:
+					maxValue = max_f;
+					minValue = min_f;
+					break;
+			}
+
 		if (draw_vecs){
 
 			glEnable(GL_COLOR_MATERIAL);
@@ -467,17 +485,24 @@ void visualize(){
 
 					idx = ((j + 1) * DIM) + i;
 					float length = 0;
-					switch(scalarIndex){
-						case 0: length = rho[idx];
+					float colorValueGlpyhs = 0;
+					switch(scalarVectorIndex){
+						case 0: colorValueGlpyhs = rho[idx];
 								break;
-						case 1: vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
+						case 1: colorValueGlpyhs = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
 								length = vec_mod;
 								break;
-						case 2: for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
+						case 2: colorValueGlpyhs = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
 								length = for_mod;
 								break;
 					}
-					set_colormap(length, scalar_col,NCOLORS,0);
+					switch(vectorIndex){
+						case 0: length = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
+								break;
+						case 1: length = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
+								break;
+					}
+					set_colormap(colorValueGlpyhs, scalar_col,NCOLORS,0);
 				
 					float radius = length*vec_scale;
 					float angle = atan2(fy[idx],fx[idx])*180/3.1415	;
@@ -590,29 +615,58 @@ void visualize(){
 		}		
 	}
 
-	if (diver){
+	if (optionIndex == 2){
+		float max_diver = -1;
+		float min_diver = 1;
 		switch(divergenceIndex){
 			case 0: //V vector field
-				for(int rowNumber = 0; rowNumber <= DIM-1; ++rowNumber){
-					for(int colNumber = 0; colNumber <= DIM-1; ++colNumber){
-						if(rowNumber == DIM-1){
-							array2[rowNumber][colNumber] = vy[colNumber] -vy[(rowNumber)*DIM + colNumber];
-						}else{
-							array2[rowNumber][colNumber] = vy[DIM*(rowNumber+1) + colNumber] - vy[(rowNumber*DIM) +colNumber];
+
+			for(int rowNumber = 0; rowNumber < DIM; rowNumber++)
+		{
+			
+		double row = vy[rowNumber];
+		
+		for(int colNumber = 0; colNumber < DIM; colNumber++)
+		{	if(rowNumber == DIM-1){
+		//array[rowNumber][colNumber] = vx[DIM*(rowNumber+1) + colNumber] - vx[(rowNumber)*DIM + colNumber];
+		array2[rowNumber][colNumber] = vy[DIM*(rowNumber+1) + colNumber] -vy[(rowNumber)*DIM + colNumber];}
+		else{
+		//array[rowNumber][colNumber] = vx[DIM*(rowNumber+1) + colNumber] - vx[(rowNumber*DIM) +colNumber];
+		array2[rowNumber][colNumber] = vy[DIM*(rowNumber+1) + colNumber] - vy[(rowNumber*DIM) +colNumber];}
+		}
+		}
+		
+		for(int colNumber = 0; colNumber < DIM; colNumber++)
+		{
+			
+		double col = vx[colNumber];
+		
+		for(int rowNumber = 0; rowNumber < DIM; rowNumber++)
+		{	if(colNumber == DIM-1){
+		array[colNumber][rowNumber] = vx[DIM*(colNumber+1) + rowNumber] - vx[(colNumber)*DIM + rowNumber];}
+		//array2[rowNumber][colNumber] = vy[DIM*(rowNumber+1) + colNumber] -vy[(rowNumber)*DIM + colNumber]}
+		else{
+		array[colNumber][rowNumber] = vx[DIM*(colNumber+1) + rowNumber] - vx[(colNumber*DIM) +rowNumber];
+		//array2[rowNumber][colNumber] = vy[DIM*(rowNumber+1) + colNumber] - vy[(rowNumber*DIM) +colNumber];}
+		}
+}}				
+				for (j = 0; j < DIM - 1; ++j){
+					for (i = 0; i < DIM - 1; ++i){
+						diverg_v[j][i] = array[j][i] + array2[j][i];
+						// printf("Div: %f\n", diverg_v[j][i]);
+						if (diverg_v[j][i] < min_diver){
+							min_diver = diverg_v[j][i];
+							// printf("Min: %f\n", minValue);
+						}else if (diverg_v[j][i] >= max_diver){
+							max_diver = diverg_v[j][i];
+							// printf("Max: %f\n", maxValue);
 						}
 					}
 				}
-		
-				for(int rowNumber = 0; rowNumber <= DIM-1; ++rowNumber){	
-					for(int colNumber = 0; colNumber <= DIM-1; ++colNumber){
-						if(rowNumber == DIM-1){
-							array[rowNumber][colNumber] = vx[DIM*rowNumber] -vx[(rowNumber)*DIM + colNumber];
-						}else{
-							array[rowNumber][colNumber] = vx[DIM*rowNumber + colNumber + 1] - vx[(rowNumber*DIM) +colNumber];
-						}
-					}
-				}
-		
+
+				maxValue = max_diver;
+				minValue = min_diver;
+
 				for (j = 0; j < DIM - 1; j++){
 					glBegin(GL_QUAD_STRIP);
 
@@ -657,26 +711,57 @@ void visualize(){
 		
 				break;
 			case 1: 
-				for(int rowNumber = 0; rowNumber <= DIM-1; ++rowNumber){		
-					for(int colNumber = 0; colNumber <= DIM-1; ++colNumber){
-						if(rowNumber == DIM-1){
-							array2[rowNumber][colNumber] = vy[colNumber] -vy[(rowNumber)*DIM + colNumber];
-						}else{
-							array2[rowNumber][colNumber] = vy[DIM*(rowNumber+1) + colNumber] - vy[(rowNumber*DIM) +colNumber];
+
+			float max_diver = -1;
+		float min_diver = 1;
+							for(int rowNumber = 0; rowNumber < DIM; rowNumber++)
+					{
+						
+					double row = vy[rowNumber];
+					
+					for(int colNumber = 0; colNumber < DIM; colNumber++)
+					{	if(rowNumber == DIM-1){
+					//array[rowNumber][colNumber] = vx[DIM*(rowNumber+1) + colNumber] - vx[(rowNumber)*DIM + colNumber];
+					array2[rowNumber][colNumber] = fy[DIM*(rowNumber+1) + colNumber] -fy[(rowNumber)*DIM + colNumber];}
+					else{
+					//array[rowNumber][colNumber] = vx[DIM*(rowNumber+1) + colNumber] - vx[(rowNumber*DIM) +colNumber];
+					array2[rowNumber][colNumber] = fy[DIM*(rowNumber+1) + colNumber] - fy[(rowNumber*DIM) +colNumber];}
+					}
+					}
+					
+					for(int colNumber = 0; colNumber < DIM; colNumber++)
+					{
+						
+					double col = fx[colNumber];
+					
+					for(int rowNumber = 0; rowNumber < DIM; rowNumber++)
+					{	if(colNumber == DIM-1){
+					array[colNumber][rowNumber] = fx[DIM*(colNumber+1) + rowNumber] - fx[(colNumber)*DIM + rowNumber];}
+					//array2[rowNumber][colNumber] = vy[DIM*(rowNumber+1) + colNumber] -vy[(rowNumber)*DIM + colNumber]}
+					else{
+					array[colNumber][rowNumber] = fx[DIM*(colNumber+1) + rowNumber] - fx[(colNumber*DIM) +rowNumber];
+					//array2[rowNumber][colNumber] = vy[DIM*(rowNumber+1) + colNumber] - vy[(rowNumber*DIM) +colNumber];}
+					}
+			}}
+				
+				
+				for (j = 0; j < DIM - 1; ++j){
+					for (i = 0; i < DIM - 1; ++i){
+						diverg_v[j][i] = array[j][i] + array2[j][i];
+						// printf("Div: %f\n", diverg_v[j][i]);
+						if (diverg_v[j][i] < min_diver){
+							min_diver = diverg_v[j][i];
+							// printf("Min: %f\n", minValue);
+						}else if (diverg_v[j][i] >= max_diver){
+							max_diver = diverg_v[j][i];
+							// printf("Max: %f\n", maxValue);
 						}
 					}
 				}
-		
-				for(int rowNumber = 0; rowNumber <= DIM-1; ++rowNumber){	
-					for(int colNumber = 0; colNumber <= DIM-1; ++colNumber){
-						if(rowNumber == DIM-1){
-							array[rowNumber][colNumber] = fx[DIM*rowNumber] -fx[(rowNumber)*DIM + colNumber];
-						}else{
-							array[rowNumber][colNumber] = fx[DIM*rowNumber + colNumber + 1] - fx[(rowNumber*DIM) +colNumber];
-						}
-					}
-				}
-		
+
+				maxValue = max_diver;
+				minValue = min_diver;
+
 				for (j = 0; j < DIM - 1; j++){
 					glBegin(GL_QUAD_STRIP);
 
@@ -686,7 +771,7 @@ void visualize(){
 					idx = (j * DIM) + i;
 					
 					diverg = array[j][i] + array2[j][i];
-					set_colormap(diverg, scalar_col,NCOLORS,0);
+					set_colormap(diverg_v[j][i], scalar_col,NCOLORS,0);
 					glVertex2f(px,py);
 
 					for (i = 0; i < DIM - 1; i++)
@@ -698,7 +783,7 @@ void visualize(){
 						
 					
 						diverg = array[j+1][i] + array2[j+1][i];
-						set_colormap(diverg, scalar_col,NCOLORS,0);
+						set_colormap(diverg_v[j+1][i], scalar_col,NCOLORS,0);
 						
 
 						glVertex2f(px, py);
@@ -707,7 +792,7 @@ void visualize(){
 						idx = (j * DIM) + (i + 1);
 						
 						diverg = array[j][i+1] + array2[j][i+1];
-						set_colormap(diverg, scalar_col,NCOLORS,0);
+						set_colormap(diverg_v[j][i+1], scalar_col,NCOLORS,0);
 						
 						glVertex2f(px, py);
 					}
@@ -717,7 +802,7 @@ void visualize(){
 					idx = ((j + 1) * DIM) + (DIM - 1);
 					
 					diverg = array[j+1][DIM-1] + array2[j+1][DIM-1];
-					set_colormap(diverg, scalar_col,NCOLORS,0);
+					set_colormap(diverg_v[j+1][i+1], scalar_col,NCOLORS,0);
 					glVertex2f(px, py);
 					glEnd();
 				}
