@@ -32,12 +32,16 @@ extern fftw_real *rho;
 GLUI *glui;
 GLUI_Spinner *spinnerNumberColors;
 int main_window;
-int colorMapIndex;
-int datasetIndex;
-int scalarIndex;
-int vectorIndex;
-int glyphIndex;
-int isolineselected;
+int colorMapIndex = 0;
+int datasetIndex = 0;
+int scalarIndex = 0;
+int scalarVectorIndex = 0;
+int optionIndex = 0;
+int vectorIndex = 0;
+int glyphIndex = 0;
+int scalingClampingIndex = 0;
+int divergenceIndex = 0;
+int isolineselected = 0;
 int numberOfColors = 255;
 float max_clamped = 0;
 float min_clamped = 10;
@@ -77,26 +81,26 @@ void render_text(void)
 	
 
 	char array[10];
-	snprintf(array, sizeof(array), "%f ", max_clamped);
+	snprintf(array, sizeof(array), "%f ", max_rho);
 	drawBitmapText(array,winWidth - 70,winHeight - 20);
 
-	snprintf(array, sizeof(array), "%f ", min_clamped);
+	snprintf(array, sizeof(array), "%f ", min_rho);
 	drawBitmapText(array,winWidth - 70,15);
 
-	snprintf(array, sizeof(array), "%f ", (min_clamped + max_clamped)/2);
+	snprintf(array, sizeof(array), "%f ", (min_rho + max_rho)/2);
 	drawBitmapText(array,winWidth - 70,winHeight/2);
 
-	snprintf(array, sizeof(array), "%f ",min_clamped + 3*(fabs(min_clamped - max_clamped))/4);
+	snprintf(array, sizeof(array), "%f ",min_rho + 3*(fabs(min_rho - max_rho))/4);
 	drawBitmapText(array,winWidth - 70,3*winHeight/4);
 
-	snprintf(array, sizeof(array), "%f ", min_clamped + (fabs(min_clamped - max_clamped))/4);
+	snprintf(array, sizeof(array), "%f ", min_rho + (fabs(min_rho - max_rho))/4);
 	drawBitmapText(array,winWidth - 70,winHeight/4);
 }
 
 void display(void)
 {
 
-	float stepSize = (float)(winHeight - 2 *hn) / (float) NCOLORS;
+	float stepSize = (float)(winHeight - 2 *hn) / ((float) NCOLORS+1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glMatrixMode(GL_MODELVIEW);
 	// glLoadIdentity();
@@ -104,14 +108,14 @@ void display(void)
 
 	int bar_width = 40;
 	int gridWidth = winWidth - bar_width;
-	for (int i = 0; i < NCOLORS; ++i)
+	for (int i = 0; i < NCOLORS+1; ++i)
 	{
-		float value = (float) i/((float) (NCOLORS));
+		float value = (float) i/((float) (NCOLORS+1));
 		float y1 = hn+stepSize*i;
         float x1 = gridWidth; // 
         float y2 = hn+stepSize*(i+1);
         float x2 = gridWidth + bar_width;
-        set_colormap(value, scalar_col, NCOLORS,1);
+        set_colormap(value, scalar_col, NCOLORS+1,1);
         glRecti(x1,y1,x2,y2);
 	}
 
@@ -123,100 +127,244 @@ void display(void)
 	int repetition_scalar = -1;
 	int repetition_vector = -1;
 
-	switch(scalarIndex){
-		case 0: repetition_scalar = 0;
-		
-			
-				draw_rho = 1;
-				draw_vec_mod = 0;
-			draw_for_mod = 0;
-			diver = 0;
-			
-				if(repetition_scalar != aux_repetition_scalar){
-					if(max_rho < min_rho){
-						max_rho = 10;
-						min_rho = 0;
+	switch(optionIndex){
+		case 0: //scalars
+			switch(scalarIndex){
+				case 0: repetition_scalar = 0;
+						draw_rho = 1;
+						draw_vec_mod = 0;
+						draw_for_mod = 0;
+						if(scalingClampingIndex == 0){
+								maxClamped->set_float_val(0);
+								minClamped->set_float_val(0);
+						}else{
+							if(repetition_scalar != aux_repetition_scalar){
+								if(max_rho < min_rho){
+									max_rho = 10;
+									min_rho = 0;
+								}
+								maxClamped->set_float_val(10);
+								minClamped->set_float_val(0);
+								aux_repetition_scalar = repetition_scalar;
+							}
+						}
+						
+						break;
+				case 1: repetition_scalar = 1;
+						draw_rho = 0;
+						draw_vec_mod = 1;
+						draw_for_mod = 0;
+						if(scalingClampingIndex == 0){
+								maxClamped->set_float_val(0);
+								minClamped->set_float_val(0);
+						}else{
+							if(repetition_scalar != aux_repetition_scalar){
+								maxClamped->set_float_val(0.02);
+								minClamped->set_float_val(0);
+								aux_repetition_scalar = repetition_scalar;
+							}
+						}
+						break;
+				case 2:	repetition_scalar = 2;
+						draw_rho = 0;
+						draw_vec_mod = 0;
+						draw_for_mod = 1;
+						if(scalingClampingIndex == 0){
+								maxClamped->set_float_val(0);
+								minClamped->set_float_val(0);
+						}else{
+							if(repetition_scalar != aux_repetition_scalar){
+								maxClamped->set_float_val(0.2);
+								minClamped->set_float_val(0);
+								aux_repetition_scalar = repetition_scalar;
+							}
+						}
+						break;
+			}
+		case 1: 
+			switch(scalarVectorIndex){
+			case 0: repetition_scalar = 0;
+					draw_rho = 1;
+					draw_vec_mod = 0;
+					draw_for_mod = 0;
+					if(repetition_scalar != aux_repetition_scalar){
+						if(max_rho < min_rho){
+							max_rho = 10;
+							min_rho = 0;
+						}
+						maxClamped->set_float_val(max_rho);
+						minClamped->set_float_val(min_rho);
+						aux_repetition_scalar = repetition_scalar;
 					}
-					maxClamped->set_float_val(max_rho);
-					minClamped->set_float_val(min_rho);
-					aux_repetition_scalar = repetition_scalar;
-				}
-				break;
-		case 1: repetition_scalar = 1;
-				draw_rho = 0;
-				draw_vec_mod = 1;
-				draw_for_mod = 0;
-				diver = 0;
-				if(repetition_scalar != aux_repetition_scalar){
-					maxClamped->set_float_val(max_v);
-					minClamped->set_float_val(min_v);
-					aux_repetition_scalar = repetition_scalar;
-				}
-				break;
-		case 2:	repetition_scalar = 2;
-				draw_rho = 0;
-				draw_vec_mod = 0;
-				draw_for_mod = 1;
-				diver = 0;
-				if(repetition_scalar != aux_repetition_scalar){
-					maxClamped->set_float_val(max_f);
-					minClamped->set_float_val(min_f);
-					aux_repetition_scalar = repetition_scalar;
-				}
-				break;
-		case 3:	repetition_scalar = 3;
-				draw_rho = 0;
-				draw_vec_mod = 0;
-				draw_for_mod = 0;
-				diver = 0;
-				if(repetition_scalar != aux_repetition_scalar){
-					maxClamped->set_float_val(max_f);
-					minClamped->set_float_val(min_f);
-					aux_repetition_scalar = repetition_scalar;
-				}
-				break;
-		case 4: repetition_scalar = 4;
-				draw_rho = 0;
-				draw_vec_mod = 0;
-				draw_for_mod = 0;
-				diver = 1;
-				if(repetition_scalar != aux_repetition_scalar){
-							maxClamped->set_float_val(max_f);
-							minClamped->set_float_val(min_f);
-							aux_repetition_scalar = repetition_scalar;
-				}
-				break;
+					break;
+			case 1: repetition_scalar = 1;
+					draw_rho = 0;
+					draw_vec_mod = 1;
+					draw_for_mod = 0;
+					if(repetition_scalar != aux_repetition_scalar){
+						maxClamped->set_float_val(max_v);
+						minClamped->set_float_val(min_v);
+						aux_repetition_scalar = repetition_scalar;
+					}
+					break;
+			case 2:	repetition_scalar = 2;
+					draw_rho = 0;
+					draw_vec_mod = 0;
+					draw_for_mod = 1;
+					if(repetition_scalar != aux_repetition_scalar){
+						maxClamped->set_float_val(max_f);
+						minClamped->set_float_val(min_f);
+						aux_repetition_scalar = repetition_scalar;
+					}
+					break;
+			}
+
+			switch(vectorIndex){
+				case 0: repetition_vector = 0;
+						draw_vecs = 1;
+						draw_for = 0;
+						if(repetition_vector != aux_repetition_vector){
+							maxClamped->set_float_val(max_rho);
+							minClamped->set_float_val(min_rho);
+							aux_repetition_vector = repetition_vector;
+						}	
+						break;
+				case 1: repetition_vector = 1;
+						draw_vecs = 0;
+						draw_for = 1;
+						if(repetition_vector != aux_repetition_vector){
+						 	maxClamped->set_float_val(max_rho);
+						 	minClamped->set_float_val(min_rho);
+						 	aux_repetition_vector = repetition_vector;
+						}
+						break;
+			}
+
+			break;
+
+		case 2: 
+			switch(divergenceIndex){
+				case 0:
+					repetition_vector = 0;
+					diver = 1;
+					draw_vecs = 1;
+					draw_for = 0;
+					// if(repetition_vector != aux_repetition_vector){
+					// 		 	maxClamped->set_float_val(max_v);
+					// 		 	minClamped->set_float_val((-1)*max_v);
+					// 		 	aux_repetition_vector = repetition_vector;
+					// }
+					break;
+				case 1:
+					repetition_vector = 1;
+					diver = 1;
+					draw_vecs = 0;
+					draw_for = 1;
+					// if(repetition_vector != aux_repetition_vector){
+					// 		 	maxClamped->set_float_val(max_f);
+					// 		 	minClamped->set_float_val((-1)*max_f);
+					// 		 	aux_repetition_vector = repetition_vector;
+					// }
+					break;
+			}
+		case 3: 
+				break;//Height
 	}
 
-	switch(vectorIndex){
-		case 0: repetition_vector = 0;
-				draw_vecs = 1;
-				draw_for = 0;
-				 if(repetition_vector != aux_repetition_vector){
-				 	maxClamped->set_float_val(max_rho);
-				 	minClamped->set_float_val(min_rho);
-				 	aux_repetition_vector = repetition_vector;
-				 }	
-				break;
-		case 1: repetition_vector = 1;
-				draw_vecs = 0;
-				draw_for = 1;
-				 if(repetition_vector != aux_repetition_vector){
-				 	maxClamped->set_float_val(max_rho);
-				 	minClamped->set_float_val(min_rho);
-				 	aux_repetition_vector = repetition_vector;
-				 }
-				break;
-		case 2: repetition_vector = 2;
-				draw_vecs = 0;
-				draw_for = 0;
-				 if(repetition_vector != aux_repetition_vector){
-				 	maxClamped->set_float_val(max_rho);
-				 	minClamped->set_float_val(min_rho);
-				 	aux_repetition_vector = repetition_vector;
-				 }
-				break;
-	}
+	// switch(scalarIndex){
+	// 	case 0: repetition_scalar = 0;
+		
+			
+	// 			draw_rho = 1;
+	// 			draw_vec_mod = 0;
+	// 		draw_for_mod = 0;
+	// 		diver = 0;
+			
+	// 			if(repetition_scalar != aux_repetition_scalar){
+	// 				if(max_rho < min_rho){
+	// 					max_rho = 10;
+	// 					min_rho = 0;
+	// 				}
+	// 				maxClamped->set_float_val(max_rho);
+	// 				minClamped->set_float_val(min_rho);
+	// 				aux_repetition_scalar = repetition_scalar;
+	// 			}
+	// 			break;
+	// 	case 1: repetition_scalar = 1;
+	// 			draw_rho = 0;
+	// 			draw_vec_mod = 1;
+	// 			draw_for_mod = 0;
+	// 			diver = 0;
+	// 			if(repetition_scalar != aux_repetition_scalar){
+	// 				maxClamped->set_float_val(max_v);
+	// 				minClamped->set_float_val(min_v);
+	// 				aux_repetition_scalar = repetition_scalar;
+	// 			}
+	// 			break;
+	// 	case 2:	repetition_scalar = 2;
+	// 			draw_rho = 0;
+	// 			draw_vec_mod = 0;
+	// 			draw_for_mod = 1;
+	// 			diver = 0;
+	// 			if(repetition_scalar != aux_repetition_scalar){
+	// 				maxClamped->set_float_val(max_f);
+	// 				minClamped->set_float_val(min_f);
+	// 				aux_repetition_scalar = repetition_scalar;
+	// 			}
+	// 			break;
+	// 	case 3:	repetition_scalar = 3;
+	// 			draw_rho = 0;
+	// 			draw_vec_mod = 0;
+	// 			draw_for_mod = 0;
+	// 			diver = 0;
+	// 			if(repetition_scalar != aux_repetition_scalar){
+	// 				maxClamped->set_float_val(max_f);
+	// 				minClamped->set_float_val(min_f);
+	// 				aux_repetition_scalar = repetition_scalar;
+	// 			}
+	// 			break;
+	// 	case 4: repetition_scalar = 4;
+	// 			draw_rho = 0;
+	// 			draw_vec_mod = 0;
+	// 			draw_for_mod = 0;
+	// 			diver = 1;
+	// 			if(repetition_scalar != aux_repetition_scalar){
+	// 						maxClamped->set_float_val(max_f);
+	// 						minClamped->set_float_val(min_f);
+	// 						aux_repetition_scalar = repetition_scalar;
+	// 			}
+	// 			break;
+	// }
+
+	// switch(vectorIndex){
+	// 	case 0: repetition_vector = 0;
+	// 			draw_vecs = 1;
+	// 			draw_for = 0;
+	// 			 if(repetition_vector != aux_repetition_vector){
+	// 			 	maxClamped->set_float_val(max_rho);
+	// 			 	minClamped->set_float_val(min_rho);
+	// 			 	aux_repetition_vector = repetition_vector;
+	// 			 }	
+	// 			break;
+	// 	case 1: repetition_vector = 1;
+	// 			draw_vecs = 0;
+	// 			draw_for = 1;
+	// 			 if(repetition_vector != aux_repetition_vector){
+	// 			 	maxClamped->set_float_val(max_rho);
+	// 			 	minClamped->set_float_val(min_rho);
+	// 			 	aux_repetition_vector = repetition_vector;
+	// 			 }
+	// 			break;
+	// 	case 2: repetition_vector = 2;
+	// 			draw_vecs = 0;
+	// 			draw_for = 0;
+	// 			 if(repetition_vector != aux_repetition_vector){
+	// 			 	maxClamped->set_float_val(max_rho);
+	// 			 	minClamped->set_float_val(min_rho);
+	// 			 	aux_repetition_vector = repetition_vector;
+	// 			 }
+	// 			break;
+	// }
 
 	switch(colorMapIndex){
 		case 0: scalar_col = COLOR_GRAYSCALE;
@@ -346,25 +494,56 @@ int main(int argc, char **argv, int NLEVELS)
 	GLUI_Panel *mainPanel = new GLUI_Panel(glui, "Configuration");
 	mainPanel->set_alignment(GLUI_ALIGN_LEFT);
 
-	GLUI_Panel *panel1 = new GLUI_Panel(mainPanel, "");
+	GLUI_Panel *panel1 = new GLUI_Panel(mainPanel, "General Options");
 
-	GLUI_Panel *datasetPanel = new GLUI_Panel(panel1, "Dataset");
+	GLUI_Panel *optionPanel = new GLUI_Panel(panel1, "");
 
-	GLUI_RadioGroup *radioScalar = new GLUI_RadioGroup(datasetPanel, &scalarIndex);
+	GLUI_RadioGroup *radioOptions = new GLUI_RadioGroup(optionPanel, &optionIndex);
+	GLUI_RadioButton *optionDensity = new GLUI_RadioButton( radioOptions, "Scalars" );
+	GLUI_RadioButton *optionVec = new GLUI_RadioButton( radioOptions, "Vectors" );
+	GLUI_RadioButton *optionDIv = new GLUI_RadioButton( radioOptions, "Divergence" );
+	GLUI_RadioButton *optionHeight = new GLUI_RadioButton( radioOptions, "Height Plot" );
+	
+
+	GLUI_Panel *colorPanel = new GLUI_Panel(panel1, "Color configuration");
+
+	GLUI_EditText *setNumberOfColors = new GLUI_EditText(colorPanel, "Number of colors(2-255):", &NCOLORS);
+	setNumberOfColors->set_int_val(255);
+	setNumberOfColors->set_int_limits( 2, 255, GLUI_LIMIT_CLAMP );
+
+	GLUI_Panel *scalarPanel = new GLUI_Panel(mainPanel, "Scalars");
+
+	GLUI_RadioGroup *radioScalar = new GLUI_RadioGroup(scalarPanel, &scalarIndex);
 	GLUI_RadioButton *buttonDensity = new GLUI_RadioButton( radioScalar, "rho" );
 	GLUI_RadioButton *buttonVecMod = new GLUI_RadioButton( radioScalar, "||v||" );
 	GLUI_RadioButton *buttonForMod = new GLUI_RadioButton( radioScalar, "||f||" );
-	GLUI_RadioButton *buttonNoneScalar = new GLUI_RadioButton( radioScalar, "None" );
-	GLUI_RadioButton *buttonNoneDiver = new GLUI_RadioButton( radioScalar, "Divergence" );
+
+	GLUI_Panel *panelVectors = new GLUI_Panel(mainPanel, "Vectors");
+
+	GLUI_Panel *vectorsScalar = new GLUI_Panel(panelVectors, "Scalar");
+
+	GLUI_RadioGroup *vectorScalar = new GLUI_RadioGroup(vectorsScalar, &scalarVectorIndex);
+	GLUI_RadioButton *vectorDensity = new GLUI_RadioButton( vectorScalar, "rho" );
+	GLUI_RadioButton *vectorVecMod = new GLUI_RadioButton( vectorScalar, "||v||" );
+	GLUI_RadioButton *vectorForMod = new GLUI_RadioButton( vectorScalar, "||f||" );
 	
 
-	glui->add_column_to_panel(datasetPanel, true);
+	glui->add_column_to_panel(panelVectors, true);
 
-	GLUI_RadioGroup *radioVectors = new GLUI_RadioGroup(datasetPanel, &vectorIndex);
+	GLUI_Panel *vectorsFields = new GLUI_Panel(panelVectors, "Vector Fields");
+
+	GLUI_RadioGroup *radioVectors = new GLUI_RadioGroup(vectorsFields, &vectorIndex);
 	GLUI_RadioButton *buttonVelocity = new GLUI_RadioButton( radioVectors, "v" );
 	GLUI_RadioButton *buttonForces = new GLUI_RadioButton( radioVectors, "f" );
-	GLUI_RadioButton *buttonNoneVectors = new GLUI_RadioButton( radioVectors, "None" );
 	
+	glui->add_column_to_panel(panelVectors, true);
+
+	GLUI_Panel *glyphPanel = new GLUI_Panel(panelVectors, "Glyphs");
+
+	GLUI_RadioGroup *glyphMode = new GLUI_RadioGroup(glyphPanel, &glyphIndex);
+	GLUI_RadioButton *lines = new GLUI_RadioButton( glyphMode, "Lines" );
+	GLUI_RadioButton *cones = new GLUI_RadioButton( glyphMode, "Cones" );
+	GLUI_RadioButton *arrows = new GLUI_RadioButton( glyphMode, "Arrows" );
 
 	glui->add_column_to_panel(panel1, true);
 
@@ -375,24 +554,16 @@ int main(int argc, char **argv, int NLEVELS)
 	GLUI_RadioButton *buttonRainbow = new GLUI_RadioButton( radioColorMap, "Rainbow" );
 	GLUI_RadioButton *buttonBlueToYellow = new GLUI_RadioButton( radioColorMap, "Blue To Yellow" );
 
-	GLUI_Panel *colorPanel = new GLUI_Panel(mainPanel, "Color configuration");
+	GLUI_Panel *scalingPanel = new GLUI_Panel(panel1, "Scaling/Clamping");
 
-	GLUI_EditText *setNumberOfColors = new GLUI_EditText(colorPanel, "Number of colors(2-255):", &NCOLORS);
-	setNumberOfColors->set_int_val(255);
-	setNumberOfColors->set_int_limits( 2, 255, GLUI_LIMIT_CLAMP );
+	GLUI_RadioGroup *radioScaling = new GLUI_RadioGroup(scalingPanel, &scalingClampingIndex);
+	GLUI_RadioButton *buttonScaling = new GLUI_RadioButton( radioScaling, "Scaling" );
+	GLUI_RadioButton *buttonClamping = new GLUI_RadioButton( radioScaling, "Clamping" );
 
-	GLUI_Panel *scalingPanel = new GLUI_Panel(mainPanel, "Scaling/Clamping");
 
 	maxClamped = new GLUI_EditText(scalingPanel, "Maximum value for clamping:", &max_clamped);
 
 	minClamped = new GLUI_EditText(scalingPanel, "Minimum value for clamping:", &min_clamped);
-
-	GLUI_Panel *glyphPanel = new GLUI_Panel(mainPanel, "Glyphs");
-
-	GLUI_RadioGroup *glyphMode = new GLUI_RadioGroup(glyphPanel, &glyphIndex);
-	GLUI_RadioButton *lines = new GLUI_RadioButton( glyphMode, "Lines" );
-	GLUI_RadioButton *cones = new GLUI_RadioButton( glyphMode, "Cones" );
-	GLUI_RadioButton *arrows = new GLUI_RadioButton( glyphMode, "Arrows" );
 
 	glui->add_column_to_panel(glyphPanel, true);
 
@@ -400,15 +571,21 @@ int main(int argc, char **argv, int NLEVELS)
 	GLUI_Button *glyphScaleDown = new GLUI_Button(glyphPanel, "Scale Down", -1, (GLUI_Update_CB)scaleGlyphDown);
 
 
-	GLUI_EditText *setNumberOfSamples = new GLUI_EditText(mainPanel, "Number of Samples (Dimension of Square) ", &numberOfSamples);
+	GLUI_EditText *setNumberOfSamples = new GLUI_EditText(panel1, "Number of Samples (Dimension of Square) ", &numberOfSamples);
 	setNumberOfSamples->set_int_val(50);
 	setNumberOfSamples->set_int_limits( 1, 50, GLUI_LIMIT_CLAMP );
 
-	GLUI_EditText *isovalueText = new GLUI_EditText(mainPanel, "Number of Samples (Dimension of Square) ", &isovalue);
-	setNumberOfSamples->set_int_val(0.0);
+	GLUI_Panel *diverPanel = new GLUI_Panel(mainPanel, "Divergence");
 
-	GLUI_RadioGroup *radioIsolines = new GLUI_RadioGroup(mainPanel, &isolineselected);
-	GLUI_RadioButton *buttonIsolines = new GLUI_RadioButton( radioIsolines, "Isolines" );
+	GLUI_RadioGroup *radioDivergence = new GLUI_RadioGroup(diverPanel, &divergenceIndex);
+	GLUI_RadioButton *vDivergence = new GLUI_RadioButton( radioDivergence, "v" );
+	GLUI_RadioButton *fDivergence = new GLUI_RadioButton( radioDivergence, "f" );
+
+	// GLUI_EditText *isovalueText = new GLUI_EditText(mainPanel, "Number of Samples (Dimension of Square) ", &isovalue);
+	// setNumberOfSamples->set_int_val(0.0);
+
+	// GLUI_RadioGroup *radioIsolines = new GLUI_RadioGroup(mainPanel, &isolineselected);
+	// GLUI_RadioButton *buttonIsolines = new GLUI_RadioButton( radioIsolines, "Isolines" );
 
 	GLUI_Button *Exit = new GLUI_Button(mainPanel, "Exit", -1, (GLUI_Update_CB)exit);
 

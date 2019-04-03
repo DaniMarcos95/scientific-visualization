@@ -4,6 +4,7 @@
 #include "Simulation.h"
 #include <rfftw.h>              //the numerical simulation FFTW library
 #include <string>
+#include <iostream>
 
 using namespace std;
 int DIM = 50;
@@ -59,6 +60,8 @@ extern float max_v;
 extern float min_v;
 extern float max_clamped;
 extern float min_clamped;
+float maxValue;
+float minValue;
 fftw_real  hn;
 extern int scalarIndex;
 extern int glyphIndex;
@@ -66,6 +69,9 @@ extern int vectorIndex;
 extern int numberOfSamples;
 extern float isovalue;
 extern int isolineselected;
+extern int optionIndex;
+extern int divergenceIndex;
+extern int scalingClampingIndex;
 
 
 
@@ -121,15 +127,22 @@ void rainbow(float value,float* R,float* G,float* B, int color_bar)
     const float dx=0.8;
 	
 	if(color_bar != 1){
-   		if (value<min_clamped) value=min_clamped; 
-   		if (value>max_clamped) value=max_clamped;
-   		value = (value - min_clamped) / (max_clamped - min_clamped);
+		if(scalingClampingIndex == 0){
+	   		if (value<minValue) value=minValue; 
+	   		if (value>maxValue) value=maxValue;
+	   		value = (value - minValue) / (maxValue - minValue);
+	   	}else{
+	   		if (value<min_clamped) value=min_clamped; 
+	   		if (value>max_clamped) value=max_clamped;
+	   		value = (value - min_clamped) / (max_clamped - min_clamped);
+	   	}
     }
 	value = (6-2*dx)*value+dx;
 	
 	*R = max(0.0,(3-fabs(value-4)-fabs(value-5))/2);
 	*G = max(0.0,(4-fabs(value-2)-fabs(value-4))/2);
 	*B = max(0.0,(3-fabs(value-1)-fabs(value-2))/2);
+
 }
 
 
@@ -138,9 +151,15 @@ void blue_yel(float value, float* R, float* G, float* B, int color_bar)
 {
    
    if(color_bar != 1){
-   		if (value<min_clamped) value=min_clamped; 
-   		if (value>max_clamped) value=max_clamped;
-   		value = (value - min_clamped) / (max_clamped - min_clamped);
+   		if(scalingClampingIndex == 0){
+	   		if (value<minValue) value=minValue; 
+	   		if (value>maxValue) value=maxValue;
+	   		value = (value - minValue) / (maxValue - minValue);
+	   	}else{
+	   		if (value<min_clamped) value=min_clamped; 
+	   		if (value>max_clamped) value=max_clamped;
+	   		value = (value - min_clamped) / (max_clamped - min_clamped);
+	   	}
    }
    
    value = 6*value; //set value to [0,6] range
@@ -151,19 +170,24 @@ void blue_yel(float value, float* R, float* G, float* B, int color_bar)
    
 }
 
-//set_colormap: Sets three different types of colormaps
 void set_colormap( float value, int scalar_col, int NCOLORS, int color_bar)
 {
 	float R,G,B;
 
-	value *= NCOLORS;
+	value *= NCOLORS-1;
 	value = (int)(value); 
-	value/= NCOLORS;
+	value/= NCOLORS-1;
 	if (scalar_col==0){ //WHITE
 		if(color_bar != 1){
-	   		if (value<min_clamped) value=min_clamped; 
-	   		if (value>max_clamped) value=max_clamped;
-	   		value = (value - min_clamped) / (max_clamped - min_clamped);
+	   		if(scalingClampingIndex == 0){
+		   		if (value<minValue) value=minValue; 
+		   		if (value>maxValue) value=maxValue;
+		   		value = (value - minValue) / (maxValue - minValue);
+	   		}else{
+		   		if (value<min_clamped) value=min_clamped; 
+		   		if (value>max_clamped) value=max_clamped;
+		   		value = (value - min_clamped) / (max_clamped - min_clamped);
+	   	}
   		}	
 	   	R = value;
 	   	G = value;
@@ -181,11 +205,6 @@ void set_colormap( float value, int scalar_col, int NCOLORS, int color_bar)
 	glColor3f(R,G,B);
 }
 
-
-
-//direction_to_color: Set the current color by mapping a direction vector (x,y), using
-//                    the color mapping method 'method'. If method==1, map the vector direction
-//                    using a rainbow colormap. If method==0, simply use the white color
 void direction_to_color(float x, float y, int method)
 {
 	float r,g,b,f;
@@ -251,474 +270,462 @@ void direction_to_color(float x, float y, int method)
  }
 
 //visualize: This is the main visualization function
-void visualize()
-{	
-	int        i, j, idx; double px,py; float vec_mod, for_mod;
+void visualize(){	
+	int i, j, idx; double px,py; float vec_mod, for_mod;
 	fftw_real  wn = (fftw_real)winWidth / (fftw_real)(DIM + 1);   // Grid cell width
 	hn = (fftw_real)winHeight / (fftw_real)(DIM + 1);  // Grid cell heigh
 
-	if (draw_rho)
-	{
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	min_rho = 10;
+	max_rho = 0;
+	min_v= 10;
+	max_v = 0;
+	min_f = 10;
+	max_f = 0;
 
-	for (j = 0; j < DIM - 1; j++)			//draw smoke
-	{
-		glBegin(GL_QUAD_STRIP);
+	for (i = 0; i < DIM * DIM; i++){
+		if(rho[i] < min_rho){
+        	min_rho = rho[i];
+        }else if(rho[i] > max_rho){
+        	max_rho = rho[i];
+        }
 
-		i = 0;
-		px = wn + (fftw_real)i * wn;
-		py = hn + (fftw_real)j * hn;
-		idx = (j * DIM) + i;
-
-		set_colormap(rho[idx], scalar_col,NCOLORS,0);
-		glVertex2f(px,py);
-
-		for (i = 0; i < DIM - 1; i++)
-		{
-			px = wn + (fftw_real)i * wn;
-			py = hn + (fftw_real)(j + 1) * hn;
-			idx = ((j + 1) * DIM) + i;
-
-			set_colormap(rho[idx], scalar_col,NCOLORS,0);
-
-			glVertex2f(px, py);
-			px = wn + (fftw_real)(i + 1) * wn;
-			py = hn + (fftw_real)j * hn;
-			idx = (j * DIM) + (i + 1);
-
-			set_colormap(rho[idx], scalar_col,NCOLORS,0);
-			glVertex2f(px, py);
-		}
-
-		px = wn + (fftw_real)(DIM - 1) * wn;
-		py = hn + (fftw_real)(j + 1) * hn;
-		idx = ((j + 1) * DIM) + (DIM - 1);
-		set_colormap(rho[idx],scalar_col,NCOLORS,0);
-		glVertex2f(px, py);
-		glEnd();
-	}
+        float v_magnitude = sqrt(pow(vx[i],2) + pow(vy[i],2));
+        if(v_magnitude < min_v){
+        	min_v = v_magnitude;
+        }else if(v_magnitude > max_v){
+        	max_v = v_magnitude;
+        }
+        
+        float f_magnitude = sqrt(pow(fx[i],2) + pow(fy[i],2));
+        if(f_magnitude < min_f){
+        	min_f = f_magnitude;
+        }else if(f_magnitude > max_f){
+        	max_f = f_magnitude;
+        }
 	}
 
-	//Drawing the smoke module ||v||- not working at the moment.
-	if (draw_vec_mod)
-	
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-	for (j = 0; j < DIM - 1; j++)			//draw smoke
-	{
-		glBegin(GL_QUAD_STRIP);
-
-		i = 0;
-		px = wn + (fftw_real)i * wn;
-		py = hn + (fftw_real)j * hn;
-		idx = (j * DIM) + i;
-		
-		 
-		
-		vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
-		set_colormap(vec_mod, scalar_col,NCOLORS,1);
-		glVertex2f(px,py);
-
-		for (i = 0; i < DIM - 1; i++)
-		{
-			px = wn + (fftw_real)i * wn;
-			py = hn + (fftw_real)(j + 1) * hn;
-			idx = ((j + 1) * DIM) + i;
-			
-			 
-			vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
-			set_colormap(vec_mod, scalar_col,NCOLORS,1);
-			
-
-			glVertex2f(px, py);
-			px = wn + (fftw_real)(i + 1) * wn;
-			py = hn + (fftw_real)j * hn;
-			idx = (j * DIM) + (i + 1);
-			 
-			vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
-			set_colormap(vec_mod, scalar_col,NCOLORS,1);
-			glVertex2f(px, py);
-		}
-
-		px = wn + (fftw_real)(DIM - 1) * wn;
-		py = hn + (fftw_real)(j + 1) * hn;
-		idx = ((j + 1) * DIM) + (DIM - 1);
-		
-		 
-		vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
-		set_colormap(vec_mod, scalar_col,NCOLORS,1);
-		glVertex2f(px, py);
-		glEnd();
+	switch(scalarIndex){
+		case 0:
+			maxValue = max_rho;
+			minValue = min_rho;
+			break;
+		case 1:
+			maxValue = max_v;
+			minValue = min_v;
+			break;
+		case 2:
+			maxValue = max_f;
+			minValue = min_f;
+			break;
 	}
-	
 
-	if (draw_for_mod) //Draws smoke for the force dataset
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	if(optionIndex == 0){
+		if (draw_rho){
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+			for (j = 0; j < DIM - 1; j++){
+				glBegin(GL_QUAD_STRIP);
+				i = 0;
+				px = wn + (fftw_real)i * wn;
+				py = hn + (fftw_real)j * hn;
+				idx = (j * DIM) + i;
 
-	for (j = 0; j < DIM - 1; j++)			//draw smoke
-	{
-		glBegin(GL_QUAD_STRIP);
+				set_colormap(rho[idx], scalar_col,NCOLORS,0);
+				glVertex2f(px,py);
 
-		i = 0;
-		px = wn + (fftw_real)i * wn;
-		py = hn + (fftw_real)j * hn;
-		idx = (j * DIM) + i;
+				for (i = 0; i < DIM - 1; i++){
+					px = wn + (fftw_real)i * wn;
+					py = hn + (fftw_real)(j + 1) * hn;
+					idx = ((j + 1) * DIM) + i;
 
-		for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
-		set_colormap(for_mod, scalar_col,NCOLORS,0);
-		glVertex2f(px,py);
+					set_colormap(rho[idx], scalar_col,NCOLORS,0);
 
-		for (i = 0; i < DIM - 1; i++)
-		{
-			px = wn + (fftw_real)i * wn;
-			py = hn + (fftw_real)(j + 1) * hn;
-			idx = ((j + 1) * DIM) + i;
+					glVertex2f(px,py);
+					px = wn + (fftw_real)(i + 1) * wn;
+					py = hn + (fftw_real)j * hn;
+					idx = (j * DIM) + (i + 1);
 
-			for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
-			set_colormap(for_mod, scalar_col,NCOLORS,0);
-
-			glVertex2f(px, py);
-			px = wn + (fftw_real)(i + 1) * wn;
-			py = hn + (fftw_real)j * hn;
-			idx = (j * DIM) + (i + 1);
-
-			for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
-			set_colormap(for_mod, scalar_col,NCOLORS,0);
-			glVertex2f(px, py);
-		}
-
-		px = wn + (fftw_real)(DIM - 1) * wn;
-		py = hn + (fftw_real)(j + 1) * hn;
-		idx = ((j + 1) * DIM) + (DIM - 1);
-		for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
-		set_colormap(for_mod, scalar_col,NCOLORS,0);
-		glVertex2f(px, py);
-		glEnd();
-	}
-	
-
-	if (draw_vecs){
-
-		glEnable(GL_LIGHTING);
-		glEnable(GL_COLOR_MATERIAL);
-		glEnable(GL_LIGHT0);
-		
-		if(glyphIndex == 0){
-			glBegin(GL_LINES);
-		}
-
-		for (i = 0; i < DIM-1; i += DIM/numberOfSamples){
-	    	for (j = 0; j < DIM-1; j += DIM/numberOfSamples){	
-
-	    		px = wn + (fftw_real)i * wn;
-				py = hn + (fftw_real)(j + 1) * hn;
-
-				idx = ((j + 1) * DIM) + i;
-				float length = 0;
-				switch(scalarIndex){
-					case 0: length = rho[idx];
-							break;
-					case 1: vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
-							// length = (vec_mod - min_v)/(max_v - min_v);
-							length = vec_mod;
-							break;
-					case 2: for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
-							// length = (for_mod - min_f)/(max_f - min_f);
-							length = for_mod;
-							break;
+					set_colormap(rho[idx], scalar_col,NCOLORS,0);
+					glVertex2f(px,py);
 				}
-				set_colormap(length, scalar_col,NCOLORS,0);
+
+				px = wn + (fftw_real)(DIM - 1) * wn;
+				py = hn + (fftw_real)(j + 1) * hn;
+				idx = ((j + 1) * DIM) + (DIM - 1);
+				set_colormap(rho[idx],scalar_col,NCOLORS,0);
+				glVertex2f(px,py);
+				glEnd();
+			}
+		}
+
+		if (draw_vec_mod){
+		
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+
+			for (j = 0; j < DIM - 1; j++){
+				glBegin(GL_QUAD_STRIP);
+
+				i = 0;
+				px = wn + (fftw_real)i * wn;
+				py = hn + (fftw_real)j * hn;
+				idx = (j * DIM) + i;
+
+				vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
+				set_colormap(for_mod, scalar_col,NCOLORS,0);
+				glVertex2f(px,py);
+
+				for (i = 0; i < DIM - 1; i++){
+
+					px = wn + (fftw_real)i * wn;
+					py = hn + (fftw_real)(j + 1) * hn;
+					idx = ((j + 1) * DIM) + i;
+
+					vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
+					set_colormap(vec_mod, scalar_col,NCOLORS,0);
+
+					glVertex2f(px, py);
+					px = wn + (fftw_real)(i + 1) * wn;
+					py = hn + (fftw_real)j * hn;
+					idx = (j * DIM) + (i + 1);
+
+					vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
+					set_colormap(vec_mod, scalar_col,NCOLORS,0);
+					glVertex2f(px, py);
+				}
+
+				px = wn + (fftw_real)(DIM - 1) * wn;
+				py = hn + (fftw_real)(j + 1) * hn;
+				idx = ((j + 1) * DIM) + (DIM - 1);
+				vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
+				set_colormap(vec_mod, scalar_col,NCOLORS,0);
+				glVertex2f(px, py);
+				glEnd();
+			}
+		}
+
+		if (draw_for_mod){
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+
+			for (j = 0; j < DIM - 1; j++){
+				glBegin(GL_QUAD_STRIP);
+
+				i = 0;
+				px = wn + (fftw_real)i * wn;
+				py = hn + (fftw_real)j * hn;
+				idx = (j * DIM) + i;
+
+				for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
+				set_colormap(for_mod, scalar_col,NCOLORS,0);
+				glVertex2f(px,py);
+
+				for (i = 0; i < DIM - 1; i++){
+
+					px = wn + (fftw_real)i * wn;
+					py = hn + (fftw_real)(j + 1) * hn;
+					idx = ((j + 1) * DIM) + i;
+
+					for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
+					set_colormap(for_mod, scalar_col,NCOLORS,0);
+
+					glVertex2f(px, py);
+					px = wn + (fftw_real)(i + 1) * wn;
+					py = hn + (fftw_real)j * hn;
+					idx = (j * DIM) + (i + 1);
+
+					for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
+					set_colormap(for_mod, scalar_col,NCOLORS,0);
+					glVertex2f(px, py);
+				}
+
+				px = wn + (fftw_real)(DIM - 1) * wn;
+				py = hn + (fftw_real)(j + 1) * hn;
+				idx = ((j + 1) * DIM) + (DIM - 1);
+				for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
+				set_colormap(for_mod, scalar_col,NCOLORS,0);
+				glVertex2f(px, py);
+				glEnd();
+			}
+		}
+	}
+
+	if(optionIndex == 1){
+		if (draw_vecs){
+
+			glEnable(GL_COLOR_MATERIAL);
+		
+			if(glyphIndex == 0){
+				glBegin(GL_LINES);
+			}
+
+			for (i = 0; i < DIM-1; i += DIM/numberOfSamples){
+	    		for (j = 0; j < DIM-1; j += DIM/numberOfSamples){	
+
+		    		px = wn + (fftw_real)i * wn;
+					py = hn + (fftw_real)(j + 1) * hn;
+
+					idx = ((j + 1) * DIM) + i;
+					float length = 0;
+					switch(scalarIndex){
+						case 0: length = rho[idx];
+								break;
+						case 1: vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
+								length = vec_mod;
+								break;
+						case 2: for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
+								length = for_mod;
+								break;
+					}
+					set_colormap(length, scalar_col,NCOLORS,0);
 				
-				
-				float radius = length*vec_scale;
-				float angle = atan2(fy[idx],fx[idx])*180/3.1415	;
-				GLUquadricObj *quadric = gluNewQuadric();
+					float radius = length*vec_scale;
+					float angle = atan2(fy[idx],fx[idx])*180/3.1415	;
+					GLUquadricObj *quadric = gluNewQuadric();
 
-				switch(glyphIndex){
-					case 0:	direction_to_color(vx[idx],vy[idx],scalar_col);
-							
-						    glVertex2f(wn + (fftw_real)i * wn, hn + (fftw_real)j * hn);
-						    glVertex2f((wn + (fftw_real)i * wn) + vec_scale * vx[idx], (hn + (fftw_real)j * hn) + vec_scale * vy[idx]);
-						    
-							break;
+					switch(glyphIndex){
+						case 0:	direction_to_color(vx[idx],vy[idx],scalar_col);
+								
+							    glVertex2f(wn + (fftw_real)i * wn, hn + (fftw_real)j * hn);
+							    glVertex2f((wn + (fftw_real)i * wn) + vec_scale * vx[idx], (hn + (fftw_real)j * hn) + vec_scale * vy[idx]);    
+								break;
 
-					case 1: glTranslatef(px, py,1);						
-							glRotatef(90-angle,0,0,-1);
-							glRotatef(-90,1,0,0);
+						case 1: glTranslatef(px, py,1);						
+								glRotatef(90-angle,0,0,-1);
+								glRotatef(-90,1,0,0);
+								glScalef(1.0,1.0,1.0);
+								gluCylinder(quadric, radius/3, 0, radius, 4, 4);
+								gluDeleteQuadric(quadric);
+				                glLoadIdentity();
+				                break;
 
-							glScalef(1.0,1.0,1.0);
+				        case 2:	glTranslatef(px, py,1);						
+								glRotatef(90-angle,0,0,-1);
+								glRotatef(-90,1,0,0);
+								glTranslated(0,0,radius);
+								gluCylinder(quadric, radius/3, 0, radius, 4,4);
+								glTranslated(0,0,-radius);
+								gluCylinder(quadric, radius/20, radius/20, radius, 4, 4);
+								glTranslatef(px, py,1);						
+								glRotatef(90-angle,0,0,-1);
+								glRotatef(-90,1,0,0);
+								gluDeleteQuadric(quadric);
+								glLoadIdentity();
+					}
+				}
+			}	
 
-							gluCylinder(quadric, radius/3, 0, radius, 4, 4);
+			if(glyphIndex == 0){
+				glEnd();
+			}
+		}
 
-							gluDeleteQuadric(quadric);
-			                glLoadIdentity();
+		if (draw_for){ 
 
-			                break;
+			glEnable(GL_COLOR_MATERIAL);
+			
+			if(glyphIndex == 0){
+				glBegin(GL_LINES);
+			}
 
-			        case 2:	glTranslatef(px, py,1);						
-							glRotatef(90-angle,0,0,-1);
-							glRotatef(-90,1,0,0);
+			for (i = 0; i < DIM-1; i += DIM/numberOfSamples){
+	    		for (j = 0; j < DIM-1; j += DIM/numberOfSamples){	
 
-							// ARROW
-							glTranslated(0,0,radius);
-							gluCylinder(quadric, radius/3, 0, radius, 4,4);
-							glTranslated(0,0,-radius);
-							gluCylinder(quadric, radius/20, radius/20, radius, 4, 4);
+		    		px = wn + (fftw_real)i * wn;
+					py = hn + (fftw_real)(j + 1) * hn;
 
-							//Line
-							glTranslatef(px, py,1);						
-							glRotatef(90-angle,0,0,-1);
-							glRotatef(-90,1,0,0);
-							gluDeleteQuadric(quadric);
-							glLoadIdentity();
+					idx = ((j + 1) * DIM) + i;
+
+					float length = 0;
+					switch(scalarIndex){
+						case 0: length = rho[idx];
+								break;
+						case 1: vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
+								length = vec_mod;
+								break;
+						case 2: for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
+								break;
+					}
+
+					set_colormap(length, scalar_col,NCOLORS,0);
+
+					float radius = length*vec_scale;
+					float angle = atan2(fy[idx],fx[idx])*180/3.1415	;
+					GLUquadricObj *quadric = gluNewQuadric();
+
+	             	switch(glyphIndex){
+						case 0:	direction_to_color(vx[idx],vy[idx],scalar_col);
+								
+							    glVertex2f(wn + (fftw_real)i * wn, hn + (fftw_real)j * hn);
+							    glVertex2f((wn + (fftw_real)i * wn) + vec_scale * vx[idx], (hn + (fftw_real)j * hn) + vec_scale * vy[idx]);    
+								break;
+
+						case 1: glTranslatef(px, py,1);						
+								glRotatef(90-angle,0,0,-1);
+								glRotatef(-90,1,0,0);
+								glScalef(1.0,1.0,1.0);
+								gluCylinder(quadric, radius/3, 0, radius, 4, 4);
+								gluDeleteQuadric(quadric);
+				                glLoadIdentity();
+				                break;
+
+				        case 2:	glTranslatef(px, py,1);						
+								glRotatef(90-angle,0,0,-1);
+								glRotatef(-90,1,0,0);
+								glTranslated(0,0,radius);
+								gluCylinder(quadric, radius/3, 0, radius, 4,4);
+								glTranslated(0,0,-radius);
+								gluCylinder(quadric, radius/20, radius/20, radius, 4, 4);
+								glTranslatef(px, py,1);						
+								glRotatef(90-angle,0,0,-1);
+								glRotatef(-90,1,0,0);
+								gluDeleteQuadric(quadric);
+								glLoadIdentity();
+					}
 				}
 			}
-		}	
-
-		if(glyphIndex == 0){
-			glEnd();
-		}
+			if(glyphIndex == 0){
+				glEnd();
+			}	
+		}		
 	}
-	
-	//Draw glyphs for the f vector field
-	if (draw_for){ 
 
-		glEnable(GL_LIGHTING);
-		glEnable(GL_COLOR_MATERIAL);
-		glEnable(GL_LIGHT0);
-		
-		for (i = 0; i < DIM-1; i++){
-	    	for (j = 0; j < DIM-1; j++){	
-
-	    		px = wn + (fftw_real)i * wn;
-				py = hn + (fftw_real)(j + 1) * hn;
-
-				idx = ((j + 1) * DIM) + i;
-
-				float length = 0;
-				switch(scalarIndex){
-					case 0: length = rho[idx];
-							break;
-					case 1: vec_mod = sqrt(pow(vx[idx],2) + pow(vy[idx],2));
-							// length = (vec_mod - min_v)/(max_v - min_v);
-							length = vec_mod;
-							break;
-					case 2: for_mod = sqrt(pow(fx[idx],2) + pow(fy[idx],2));
-							// length = (for_mod - min_f)/(max_f - min_f);
-							break;
-				}
-
-				set_colormap(length, scalar_col,NCOLORS,0);
-
-				float radius = length*vec_scale;
-				float angle = atan2(fy[idx],fx[idx])*180/3.1415	;
-
-				GLUquadricObj *quadric = gluNewQuadric();
-
-				// glTranslatef(px, py,1);						
-				// glRotatef(90-angle,0,0,-1);
-				// glRotatef(-90,1,0,0);
-
-				// glScalef(1.0,1.0,1.0);
-
-				// gluCylinder(quadric, radius/3, 0, radius, 4, 4);
-
-				// gluDeleteQuadric(quadric);
-    //             glLoadIdentity();
-
-
-
-
-
-
-             	glTranslatef(px, py,1);						
-				glRotatef(90-angle,0,0,-1);
-				glRotatef(-90,1,0,0);
-
-				// ARROW
-				glTranslated(0,0,radius);
-				gluCylinder(quadric, radius/3, 0, radius, 4,4);
-				glTranslated(0,0,-radius);
-				gluCylinder(quadric, radius/20, radius/20, radius, 4, 4);
-
-				//Line
-				glTranslatef(px, py,1);						
-				glRotatef(90-angle,0,0,-1);
-				glRotatef(-90,1,0,0);
-				gluDeleteQuadric(quadric);
-				glLoadIdentity();
-			}
-		}	
-
-	}		
-	
-	
 	if (diver){
-		switch(vectorIndex){
+		switch(divergenceIndex){
 			case 0: //V vector field
-		for(int rowNumber = 0; rowNumber <= DIM-1; ++rowNumber)
-		{
-			
+				for(int rowNumber = 0; rowNumber <= DIM-1; ++rowNumber){
+					for(int colNumber = 0; colNumber <= DIM-1; ++colNumber){
+						if(rowNumber == DIM-1){
+							array2[rowNumber][colNumber] = vy[colNumber] -vy[(rowNumber)*DIM + colNumber];
+						}else{
+							array2[rowNumber][colNumber] = vy[DIM*(rowNumber+1) + colNumber] - vy[(rowNumber*DIM) +colNumber];
+						}
+					}
+				}
 		
+				for(int rowNumber = 0; rowNumber <= DIM-1; ++rowNumber){	
+					for(int colNumber = 0; colNumber <= DIM-1; ++colNumber){
+						if(rowNumber == DIM-1){
+							array[rowNumber][colNumber] = vx[DIM*rowNumber] -vx[(rowNumber)*DIM + colNumber];
+						}else{
+							array[rowNumber][colNumber] = vx[DIM*rowNumber + colNumber + 1] - vx[(rowNumber*DIM) +colNumber];
+						}
+					}
+				}
 		
-		for(int colNumber = 0; colNumber <= DIM-1; ++colNumber)
-		{	if(rowNumber == DIM-1){
-		//array[rowNumber][colNumber] = vx[DIM*(rowNumber+1) + colNumber] - vx[(rowNumber)*DIM + colNumber];
-		array2[rowNumber][colNumber] = vy[colNumber] -vy[(rowNumber)*DIM + colNumber];}
-		else{
-		//array[rowNumber][colNumber] = vx[DIM*(rowNumber+1) + colNumber] - vx[(rowNumber*DIM) +colNumber];
-		array2[rowNumber][colNumber] = vy[DIM*(rowNumber+1) + colNumber] - vy[(rowNumber*DIM) +colNumber];}
-		}
-		}
-		
-		for(int rowNumber = 0; rowNumber <= DIM-1; ++rowNumber)
-		{
-			
-		
-		
-		for(int colNumber = 0; colNumber <= DIM-1; ++colNumber)
-		{	if(rowNumber == DIM-1){
-		//array[rowNumber][colNumber] = vx[DIM*(rowNumber+1) + colNumber] - vx[(rowNumber)*DIM + colNumber];
-		array[rowNumber][colNumber] = vx[DIM*rowNumber] -vx[(rowNumber)*DIM + colNumber];}
-		else{
-		//array[rowNumber][colNumber] = vx[DIM*(rowNumber+1) + colNumber] - vx[(rowNumber*DIM) +colNumber];
-		array[rowNumber][colNumber] = vx[DIM*rowNumber + colNumber + 1] - vx[(rowNumber*DIM) +colNumber];}
-		}
-		}
-		
-		for (j = 0; j < DIM - 1; j++)			//draw smoke
-	{
-		glBegin(GL_QUAD_STRIP);
+				for (j = 0; j < DIM - 1; j++){
+					glBegin(GL_QUAD_STRIP);
 
-		i = 0;
-		px = wn + (fftw_real)i * wn;
-		py = hn + (fftw_real)j * hn;
-		idx = (j * DIM) + i;
+					i = 0;
+					px = wn + (fftw_real)i * wn;
+					py = hn + (fftw_real)j * hn;
+					idx = (j * DIM) + i;
+					
+					diverg = array[j][i] + array2[j][i];
+					set_colormap(diverg, scalar_col,NCOLORS,0);
+					glVertex2f(px,py);
+
+					for (i = 0; i < DIM - 1; i++)
+					{
+						px = wn + (fftw_real)i * wn;
+						py = hn + (fftw_real)(j + 1) * hn;
+						idx = ((j + 1) * DIM) + i;
+					
+						diverg = array[j+1][i] + array2[j+1][i];
+						set_colormap(diverg, scalar_col,NCOLORS,0);
+
+						glVertex2f(px, py);
+						px = wn + (fftw_real)(i + 1) * wn;
+						py = hn + (fftw_real)j * hn;
+						idx = (j * DIM) + (i + 1);
+						
+						diverg = array[j][i+1] + array2[j][i+1];
+						set_colormap(diverg, scalar_col,NCOLORS,0);
+						
+						glVertex2f(px, py);
+					}
+
+					px = wn + (fftw_real)(DIM - 1) * wn;
+					py = hn + (fftw_real)(j + 1) * hn;
+					idx = ((j + 1) * DIM) + (DIM - 1);
+					
+					diverg = array[j+1][DIM-1] + array2[j+1][DIM-1];
+					set_colormap(diverg, scalar_col,NCOLORS,0);
+					glVertex2f(px, py);
+					glEnd();
+				}
 		
-		diverg = array[j][i] + array2[j][i];
-		set_colormap(diverg, scalar_col,NCOLORS,0);
-		glVertex2f(px,py);
-
-		for (i = 0; i < DIM - 1; i++)
-		{
-			px = wn + (fftw_real)i * wn;
-			py = hn + (fftw_real)(j + 1) * hn;
-			idx = ((j + 1) * DIM) + i;
-
-			
+				break;
+			case 1: 
+				for(int rowNumber = 0; rowNumber <= DIM-1; ++rowNumber){		
+					for(int colNumber = 0; colNumber <= DIM-1; ++colNumber){
+						if(rowNumber == DIM-1){
+							array2[rowNumber][colNumber] = vy[colNumber] -vy[(rowNumber)*DIM + colNumber];
+						}else{
+							array2[rowNumber][colNumber] = vy[DIM*(rowNumber+1) + colNumber] - vy[(rowNumber*DIM) +colNumber];
+						}
+					}
+				}
 		
-		diverg = array[j+1][i] + array2[j+1][i];
-		set_colormap(diverg, scalar_col,NCOLORS,0);
-			
+				for(int rowNumber = 0; rowNumber <= DIM-1; ++rowNumber){	
+					for(int colNumber = 0; colNumber <= DIM-1; ++colNumber){
+						if(rowNumber == DIM-1){
+							array[rowNumber][colNumber] = fx[DIM*rowNumber] -fx[(rowNumber)*DIM + colNumber];
+						}else{
+							array[rowNumber][colNumber] = fx[DIM*rowNumber + colNumber + 1] - fx[(rowNumber*DIM) +colNumber];
+						}
+					}
+				}
+		
+				for (j = 0; j < DIM - 1; j++){
+					glBegin(GL_QUAD_STRIP);
 
-			glVertex2f(px, py);
-			px = wn + (fftw_real)(i + 1) * wn;
-			py = hn + (fftw_real)j * hn;
-			idx = (j * DIM) + (i + 1);
-			
-			diverg = array[j][i+1] + array2[j][i+1];
-			set_colormap(diverg, scalar_col,NCOLORS,0);
-			
-			glVertex2f(px, py);
+					i = 0;
+					px = wn + (fftw_real)i * wn;
+					py = hn + (fftw_real)j * hn;
+					idx = (j * DIM) + i;
+					
+					diverg = array[j][i] + array2[j][i];
+					set_colormap(diverg, scalar_col,NCOLORS,0);
+					glVertex2f(px,py);
+
+					for (i = 0; i < DIM - 1; i++)
+					{
+						px = wn + (fftw_real)i * wn;
+						py = hn + (fftw_real)(j + 1) * hn;
+						idx = ((j + 1) * DIM) + i;
+
+						
+					
+						diverg = array[j+1][i] + array2[j+1][i];
+						set_colormap(diverg, scalar_col,NCOLORS,0);
+						
+
+						glVertex2f(px, py);
+						px = wn + (fftw_real)(i + 1) * wn;
+						py = hn + (fftw_real)j * hn;
+						idx = (j * DIM) + (i + 1);
+						
+						diverg = array[j][i+1] + array2[j][i+1];
+						set_colormap(diverg, scalar_col,NCOLORS,0);
+						
+						glVertex2f(px, py);
+					}
+
+					px = wn + (fftw_real)(DIM - 1) * wn;
+					py = hn + (fftw_real)(j + 1) * hn;
+					idx = ((j + 1) * DIM) + (DIM - 1);
+					
+					diverg = array[j+1][DIM-1] + array2[j+1][DIM-1];
+					set_colormap(diverg, scalar_col,NCOLORS,0);
+					glVertex2f(px, py);
+					glEnd();
+				}
+				break;
 		}
-
-		px = wn + (fftw_real)(DIM - 1) * wn;
-		py = hn + (fftw_real)(j + 1) * hn;
-		idx = ((j + 1) * DIM) + (DIM - 1);
-		
-		diverg = array[j+1][DIM-1] + array2[j+1][DIM-1];
-		set_colormap(diverg, scalar_col,NCOLORS,0);
-		glVertex2f(px, py);
-		glEnd();
-	}
-		
-	break;
-	case 1: //F-vector field
-	for(int rowNumber = 0; rowNumber <= DIM-1; ++rowNumber)
-		{
-			
-		
-		
-		for(int colNumber = 0; colNumber <= DIM-1; ++colNumber)
-		{	if(rowNumber == DIM-1){
-		//array[rowNumber][colNumber] = vx[DIM*(rowNumber+1) + colNumber] - vx[(rowNumber)*DIM + colNumber];
-		array2[rowNumber][colNumber] = vy[colNumber] -vy[(rowNumber)*DIM + colNumber];}
-		else{
-		//array[rowNumber][colNumber] = vx[DIM*(rowNumber+1) + colNumber] - vx[(rowNumber*DIM) +colNumber];
-		array2[rowNumber][colNumber] = vy[DIM*(rowNumber+1) + colNumber] - vy[(rowNumber*DIM) +colNumber];}
-		}
-		}
-		
-		for(int rowNumber = 0; rowNumber <= DIM-1; ++rowNumber)
-		{
-			
-		
-		
-		for(int colNumber = 0; colNumber <= DIM-1; ++colNumber)
-		{	if(rowNumber == DIM-1){
-		//array[rowNumber][colNumber] = vx[DIM*(rowNumber+1) + colNumber] - vx[(rowNumber)*DIM + colNumber];
-		array[rowNumber][colNumber] = fx[DIM*rowNumber] -fx[(rowNumber)*DIM + colNumber];}
-		else{
-		//array[rowNumber][colNumber] = vx[DIM*(rowNumber+1) + colNumber] - vx[(rowNumber*DIM) +colNumber];
-		array[rowNumber][colNumber] = fx[DIM*rowNumber + colNumber + 1] - fx[(rowNumber*DIM) +colNumber];}
-		}
-		}
-		
-		for (j = 0; j < DIM - 1; j++)			//draw smoke
-	{
-		glBegin(GL_QUAD_STRIP);
-
-		i = 0;
-		px = wn + (fftw_real)i * wn;
-		py = hn + (fftw_real)j * hn;
-		idx = (j * DIM) + i;
-		
-		diverg = array[j][i] + array2[j][i];
-		set_colormap(diverg, scalar_col,NCOLORS,0);
-		glVertex2f(px,py);
-
-		for (i = 0; i < DIM - 1; i++)
-		{
-			px = wn + (fftw_real)i * wn;
-			py = hn + (fftw_real)(j + 1) * hn;
-			idx = ((j + 1) * DIM) + i;
-
-			
-		
-		diverg = array[j+1][i] + array2[j+1][i];
-		set_colormap(diverg, scalar_col,NCOLORS,0);
-			
-
-			glVertex2f(px, py);
-			px = wn + (fftw_real)(i + 1) * wn;
-			py = hn + (fftw_real)j * hn;
-			idx = (j * DIM) + (i + 1);
-			
-			diverg = array[j][i+1] + array2[j][i+1];
-			set_colormap(diverg, scalar_col,NCOLORS,0);
-			
-			glVertex2f(px, py);
-		}
-
-		px = wn + (fftw_real)(DIM - 1) * wn;
-		py = hn + (fftw_real)(j + 1) * hn;
-		idx = ((j + 1) * DIM) + (DIM - 1);
-		
-		diverg = array[j+1][DIM-1] + array2[j+1][DIM-1];
-		set_colormap(diverg, scalar_col,NCOLORS,0);
-		glVertex2f(px, py);
-		glEnd();
-	}
-	
-		break;}
-}	
-	
-	if(isolineselected == 0){
-		compute_codes();
-		draw_isolines();
 	}
 }
+
 
 void draw_color_legend(){
 	switch (color_dir)
@@ -872,7 +879,9 @@ void compute_codes(){
 
 
 void draw_isolines( ){
+	glBegin(GL_LINES);
 	for(int j=0; j < DIM; ++j){
+		
 		for(int i=0; i<DIM; ++i){
 			//Get cell vectors
 		int idx1 = (j * DIM) + i;
@@ -888,13 +897,12 @@ void draw_isolines( ){
 		float ed1_y, ed2_y;
 		float ed3_x, ed3_y;
 		float ed4_x, ed4_y;
-
 			switch(isocodes[i][j]){
 				case '0001':
 				case '1110':
 				rat = ((rho[idx4] - rho[idx1]) != 0) ? ((idx4*(rho[idx4] -isovalue) + idx1*(isovalue-rho[idx1])) /(rho[idx4] - rho[idx1])) : 0; 
 				rat2 = ((rho[idx4] - rho[idx3]) != 0) ? ((idx4*(rho[idx4] -isovalue) + idx3*(isovalue-rho[idx3])) /(rho[idx4] - rho[idx3])) : 0; 
-				glBegin(GL_LINES);
+				//glBegin(GL_LINES);
 				ed1_x = ((j+1)*DIM);
 				ed1_y = (i+1) + ((i+1) - i)*rat;
 				glVertex2f(ed1_x,ed1_y);
@@ -902,14 +910,15 @@ void draw_isolines( ){
 				ed2_x = (j+1)*DIM + (i - (i+1))*rat2;
 				ed2_y = i;
 				glVertex2f(ed2_x,ed2_y);
-				glEnd();
+
+				//glEnd();
 				break;
 				
 				case '0010':
 				case '1101':
 				rat = ((rho[idx3] - rho[idx4]) != 0) ? (idx3*(rho[idx3] -isovalue) + idx4*(isovalue-rho[idx4])) /(rho[idx3] - rho[idx4]) : 0; 
 				rat2 = ((rho[idx3] - rho[idx2]) != 0) ? (idx3*(rho[idx3] -isovalue) + idx2*(isovalue-rho[idx2]) /(rho[idx3] - rho[idx4])) : 0; 
-				glBegin(GL_LINES);
+				//glBegin(GL_LINES);
 				ed1_x = ((j+1)*DIM);
 				ed1_y = (i+1) + rat;
 				glVertex2f(ed1_x,ed1_y);
@@ -917,14 +926,14 @@ void draw_isolines( ){
 				ed2_x = (j+1)*DIM + rat2;
 				ed2_y = i;
 				glVertex2f(ed2_x,ed2_y);
-				glEnd();
+				//glEnd();
 				break;
 				
 				case '0011':
 				case '1100':
 				rat = ((rho[idx4] - rho[idx1]) != 0) ? (idx4*(isovalue-rho[idx4]) + idx1*(rho[idx1] - isovalue))/(rho[idx4] - rho[idx1]) : 0; 
 				rat2 = ((rho[idx3] - rho[idx2])  != 0) ? (idx3*(isovalue-rho[idx3]) + idx2*(rho[idx2] -isovalue))/(rho[idx3] - rho[idx2]) : 0; 
-				glBegin(GL_LINES);
+				//glBegin(GL_LINES);
 				
 				ed1_x = (j+1)*DIM - rat;
 				ed1_y = i;
@@ -933,14 +942,14 @@ void draw_isolines( ){
 				ed2_x = (j+1)*DIM - rat2;
 				ed2_y = (i+1);
 				glVertex2f(ed2_x,ed2_y);
-				glEnd();
+				//glEnd();
 				break;
 				
 				case '0100':
 				case '1011':
 				rat = ((rho[idx2] - rho[idx1]) != 0) ? (idx2*(rho[idx2] -isovalue) + idx1*(isovalue-rho[idx1]) /(rho[idx2] - rho[idx1])) : 0; 
 				rat2 = ((rho[idx2] - rho[idx3]) != 0) ? (idx2*(rho[idx2] -isovalue) + idx3*(isovalue-rho[idx3]) /(rho[idx2] - rho[idx3])) : 0; 
-				glBegin(GL_LINES);
+				//glBegin(GL_LINES);
 				ed1_x = j*DIM;
 				ed1_y = (i+1) - rat;
 				glVertex2f(ed1_x,ed1_y);
@@ -948,7 +957,7 @@ void draw_isolines( ){
 				ed2_x = (j+1)*DIM - rat2;
 				ed2_y = i;
 				glVertex2f(ed2_x,ed2_y);
-				glEnd();
+				//glEnd();
 				break;
 				
 				case '0101':
@@ -957,7 +966,7 @@ void draw_isolines( ){
 				rat2 = ((rho[idx4] - rho[idx3]) != 0) ? (idx4*(rho[idx4] - isovalue) + idx3*(isovalue - rho[idx3]) / (rho[idx4]- rho[idx3])) : 0;
 				rat3 = ((rho[idx2] - rho[idx3]) != 0) ? (idx2*(rho[idx2] -isovalue) + idx3*(isovalue-rho[idx3]) /(rho[idx2] - rho[idx3])) : 0; 
 				rat4 = ((rho[idx2] - rho[idx1]) != 0) ? (idx2*(rho[idx2] -isovalue) + idx1*(isovalue-rho[idx1]) /(rho[idx2] - rho[idx1])) : 0;
-				glBegin(GL_LINES);
+				//glBegin(GL_LINES);
 				ed1_x = (j+1)*DIM - rat;
 				ed1_y = i;
 				glVertex2f(ed1_x, ed1_y);
@@ -973,14 +982,14 @@ void draw_isolines( ){
 				ed4_x = j*DIM;
 				ed4_y = (i+1) - rat4;
 				glVertex2f(ed4_x,ed4_y);
-				glEnd();
+				//glEnd();
 				break;
 				
 				case '0110':
 				case '1001':
 				rat = ((rho[idx2] - rho[idx1]) != 0) ? (idx2*(rho[idx2] -isovalue) + idx1*(isovalue-rho[idx1]) /(rho[idx2] - rho[idx1])) : 0; 
 				rat2 = ((rho[idx3] - rho[idx4]) != 0) ? (idx3*(rho[idx3] -isovalue) + idx4*(isovalue-rho[idx4]) /(rho[idx3] - rho[idx4])) : 0; 
-				glBegin(GL_LINES);
+				//glBegin(GL_LINES);
 				ed1_x = j*DIM;
 				ed1_y = (i+1) - rat;
 				glVertex2f(ed1_x,ed1_y);
@@ -988,14 +997,14 @@ void draw_isolines( ){
 				ed2_x = (j+1)*DIM;
 				ed2_y = i + rat2;
 				glVertex2f(ed2_x,ed2_y);
-				glEnd();
+				//glEnd();
 				break;
 				
 				case '0111':
 				case '1000':
 				rat = ((rho[idx2] - rho[idx1]) != 0) ? (idx2*(rho[idx2] -isovalue) + idx1*(isovalue-rho[idx1]) /(rho[idx2] - rho[idx1])) : 0; 
 				rat2 = ((rho[idx4] - rho[idx1]) != 0) ? (idx4*(rho[idx4] -isovalue) + idx1*(isovalue-rho[idx1]) /(rho[idx4] - rho[idx1])) : 0; 
-				glBegin(GL_LINES);
+				//glBegin(GL_LINES);
 				ed1_x = j*DIM;
 				ed1_y = (i+1) - rat;
 				glVertex2f(ed1_x,ed1_y);
@@ -1003,7 +1012,7 @@ void draw_isolines( ){
 				ed2_x = j*DIM + rat2;
 				ed2_y = i;
 				glVertex2f(ed2_x,ed2_y);
-				glEnd();
+				//glEnd();
 				break;
 				
 				case '1010':
@@ -1011,7 +1020,7 @@ void draw_isolines( ){
 				rat2 = ((rho[idx1] - rho[idx4]) != 0) ? (idx1*(rho[idx1] - isovalue) + idx4*(isovalue - rho[idx4]) / (rho[idx1]- rho[idx4])) : 0;
 				rat3 = ((rho[idx3] - rho[idx2]) != 0) ? (idx3*(rho[idx3] -isovalue) + idx2*(isovalue-rho[idx2]) /(rho[idx3] - rho[idx2])) : 0; 
 				rat4 = ((rho[idx3] - rho[idx4]) != 0) ? (idx3*(rho[idx3] -isovalue) + idx4*(isovalue-rho[idx4]) /(rho[idx3] - rho[idx4])) : 0;
-				glBegin(GL_LINES);
+				//glBegin(GL_LINES);
 				ed1_x = (j+1)*DIM;
 				ed1_y = i + rat;
 				glVertex2f(ed1_x, ed1_y);
@@ -1027,12 +1036,12 @@ void draw_isolines( ){
 				ed4_x = (j+1)*DIM;
 				ed4_y = (i+1) - rat4;
 				glVertex2f(ed4_x,ed4_y);
-				glEnd();
+				//glEnd();
 				break;
 				
 				
 				}
-			
 		}
 	}
+	glEnd();
 }

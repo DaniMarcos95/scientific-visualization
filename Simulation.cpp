@@ -156,27 +156,27 @@ void diffuse_matter(int n, fftw_real *vx, fftw_real *vy, fftw_real *rho, fftw_re
 			rho[i+n*j] = (1-s)*((1-t)*rho0[i0+n*j0]+t*rho0[i0+n*j1])+s*((1-t)*rho0[i1+n*j0]+t*rho0[i1+n*j1]);
 		}
 
-	for (i = 0; i < DIM * DIM; i++){
-		if(rho[i] < min_rho){
-        	min_rho = rho[i];
-        }else if(rho[i] > max_rho){
-        	max_rho = rho[i];
-        }
+	// for (i = 0; i < DIM * DIM; i++){
+	// 	if(rho[i] < min_rho){
+ //        	min_rho = rho[i];
+ //        }else if(rho[i] > max_rho){
+ //        	max_rho = rho[i];
+ //        }
 
-        float v_magnitude = sqrt(pow(vx[i],2) + pow(vy[i],2));
-        if(v_magnitude < min_v){
-        	min_v = v_magnitude;
-        }else if(v_magnitude > max_v){
-        	max_v = v_magnitude;
-        }
+ //        float v_magnitude = sqrt(pow(vx[i],2) + pow(vy[i],2));
+ //        if(v_magnitude < min_v){
+ //        	min_v = v_magnitude;
+ //        }else if(v_magnitude > max_v){
+ //        	max_v = v_magnitude;
+ //        }
         
-        float f_magnitude = sqrt(pow(fx[i],2) + pow(fy[i],2));
-        if(f_magnitude < min_f){
-        	min_f = f_magnitude;
-        }else if(f_magnitude > max_f){
-        	max_f = f_magnitude;
-        }
-	}
+ //        float f_magnitude = sqrt(pow(fx[i],2) + pow(fy[i],2));
+ //        if(f_magnitude < min_f){
+ //        	min_f = f_magnitude;
+ //        }else if(f_magnitude > max_f){
+ //        	max_f = f_magnitude;
+ //        }
+	// }
 }
 
 //set_forces: copy user-controlled forces to the force vectors that are sent to the solver.
