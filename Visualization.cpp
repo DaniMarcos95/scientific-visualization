@@ -163,17 +163,14 @@ void blue_yel(float value, float* R, float* G, float* B, int color_bar)
 	   		value = (value - min_clamped) / (max_clamped - min_clamped);
 	   	}
    }
-   const float dx=0.8;
-   value = (6-2*dx)*value+dx;
+   
    //value = 6*value; //set value to [0,6] range
     
-   /**R = max(0.0,(3-fabs(value-6)));
+   R = max(0.0,(3-fabs(value-6)));
    *G = max(0.0,(6-fabs(value-3)-fabs(value-6))/2);
    *B = max(0.0,(3-fabs(value)));
-   */
-	*R = max(0.0,(6-fabs(value-2)-fabs(value-6))/2);
-	*G = max(0.0,(4-fabs(value-2)-fabs(value-4))/2);
-	*B =0;
+   
+	
 }
 
 void heatmap(float value, float* R, float* G, float* B,int color_bar)
