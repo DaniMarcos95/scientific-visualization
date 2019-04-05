@@ -47,7 +47,7 @@ void draw_isolines();
 float diverg; 
 float array[50][50];
 float array2[50][50];
-char isocodes[50][50];
+
 float diverg_v[50][50];
 void render();
 const float dx=0.8;
@@ -74,7 +74,7 @@ extern int optionIndex;
 extern int divergenceIndex;
 extern int scalingClampingIndex;
 extern int scalarVectorIndex;
-
+int isocodes[50][50];
 
 
 
@@ -230,42 +230,42 @@ void set_colormap( float value, int scalar_col, int NCOLORS, int color_bar)
 
 void direction_to_color(float x, float y, int method)
 {
-	float r,g,b,f;
+	float R,G,B,f;
 	if (method == 1)
 	{
 	  f = atan2(y,x) / 3.1415927 + 1;
 	  set_colormap(f,scalar_col,NCOLORS,1);
-	 r = f;
-	 if(r > 1) r = 2 - r;
-	 g = f + .66667;
-     if(g > 2) g -= 2;
-	   if(g > 1) g = 2 - g;
-	   b = f + 2 * .66667;
-	   if(b > 2) b -= 2;
-	   if(b > 1) b = 2 - b;
+	 R = f;
+	 if(R > 1) R = 2 - R;
+	 G = f + .66667;
+     if(G > 2) G -= 2;
+	   if(G > 1) G = 2 - G;
+	   B = f + 2 * .66667;
+	   if(B > 2) B -= 2;
+	   if(B > 1) B = 2 - B;
 	}
 	else if (method == 0)
-	{ r = g = b = 1; }
+	{ R = G = B = 1; }
 	else if( method == 2)
 		{f = atan2(y,x) / 3.1415927 + 1;
-		r = f;
-		if (r >1 ) {r = 2 -r;}
-		g = f + .66667;
+		R = f;
+		if (R >1 ) {R = 2 -R;}
+		G = f + .66667;
 		
-	    b = f + 2 * .66667;
-		if(b>2) {b-= 2;}
-		if(b>1) {b = 2 -b;}
+	    B = f + 2 * .66667;
+		if(B>2) {B-= 2;}
+		if(B>1) {B = 2 -B;}
 		
-		if(r>0 && b>0) {
-			if(r>b) b=0;
-		else r=0;}
+		if(R>0 && B>0) {
+			if(R>B) B=0;
+		else R=0;}
 		
-		if (r > g) r=0;
+		if (R > G) R=0;
 		}
 		
 	
 	else {f = atan2(y,x) / 3.1415927 + 1;
-		  r = f;
+		  /*r = f;
 		  if(r > 1) r = 2 - r;
 		  g = f + .66667;
 		  if(g > 2) g -= 2;
@@ -277,9 +277,12 @@ void direction_to_color(float x, float y, int method)
 		  r = gr;
 		  g = 0.924 * gr;
 		  b = 0.964 * gr;
+		*/
+		
+		heatmap(f,&R,&G,&B,1);
 		
 	}
-	glColor3f(r,g,b);
+	glColor3f(R,G,B);
 	
 }
 
@@ -345,6 +348,7 @@ void visualize(){
 		}
 
 		if (draw_rho){
+			draw_isolines();
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 			for (j = 0; j < DIM - 1; j++){
@@ -965,34 +969,63 @@ void heatmap_bar(){
 	glVertex2f(470,0);
 	//glColor3f();
 }
+
+
+int hashit(string const& inString){
+	if (inString == "0000") return 0000;
+	if (inString == "0001") return 0001;
+	if (inString == "0010") return 0010;
+	if (inString == "0011") return 0011;
+	if (inString == "0100") return 0100;
+	if (inString == "0101") return 0101;
+	if (inString == "0110") return 0110;
+	if (inString == "0111") return 0111;
+	if (inString == "1000") return 1000;
+	if (inString == "1001") return 1001;
+	if (inString == "1010") return 1010;
+	if (inString == "1011") return 1011;
+	if (inString == "1100") return 1100;
+	if (inString == "1101") return 1101;
+	if (inString == "1110") return 1110;
+	if (inString == "1111") return 1111;
+
+}
 void compute_codes(){
-	for(int j = 0; j <= DIM-1; ++j)
-		{for(int i = 0; i <= DIM-1; ++i)
+	for(int j = 0; j <= DIM; ++j)
+		{for(int i = 0; i <= DIM; ++i)
 		{//Get the coordinates of the cell vertices
-		char string1,string2,string3,string4, tempstr;
+		char string1,string2,string3,string4;
+		string isocode;
 		int idx1 = (j * DIM) + i;
 		int idx2 = (j * DIM) + (i + 1);
 		int idx3 = ((j + 1) * DIM) + i;
-		int idx4 = ((j + 1) * DIM) + (DIM - 1);
+		int idx4 = ((j + 1) * DIM) + (i+1);
 		
 		
 		string1 = (rho[idx1] > isovalue) ? '1' : '0';
+		isocode = string1;
 		string2 = (rho[idx2] > isovalue) ?  '1' : '0';
-		//empstr = strcat(string1,string2);
+		isocode += string2;
 		string3 = (rho[idx3] > isovalue) ?   '1' : '0';
-		//tempstr = strcat(tempstr,string3);
+		isocode += string3;
 		string4 = (rho[idx2] > isovalue) ?  '1' : '0';
+		isocode += string4;
 		
-		isocodes[j][i] = string1 + string2 + string3 + string4;
 		
+		isocodes[j][i] = hashit(isocode);
+		
+
 		}
 		}
 		
 }
 
 
-
 void draw_isolines( ){
+	compute_codes();
+	fftw_real  wn = (fftw_real)winWidth / (fftw_real)(DIM + 1);   // Grid cell width
+	hn = (fftw_real)winHeight / (fftw_real)(DIM + 1);
+	double px,py;
 	glBegin(GL_LINES);
 	for(int j=0; j < DIM; ++j){
 		
@@ -1012,148 +1045,260 @@ void draw_isolines( ){
 		float ed3_x, ed3_y;
 		float ed4_x, ed4_y;
 			switch(isocodes[i][j]){
-				case '0001':
-				case '1110':
+				case 0001:
+				case 1110:
 				rat = ((rho[idx4] - rho[idx1]) != 0) ? ((idx4*(rho[idx4] -isovalue) + idx1*(isovalue-rho[idx1])) /(rho[idx4] - rho[idx1])) : 0; 
 				rat2 = ((rho[idx4] - rho[idx3]) != 0) ? ((idx4*(rho[idx4] -isovalue) + idx3*(isovalue-rho[idx3])) /(rho[idx4] - rho[idx3])) : 0; 
 				//glBegin(GL_LINES);
-				ed1_x = ((j+1)*DIM);
-				ed1_y = (i+1) + ((i+1) - i)*rat;
-				glVertex2f(ed1_x,ed1_y);
+				py = wn + (fftw_real)i * wn;
+				px = hn + (fftw_real)j * hn +rat;
+				glVertex2f(px,py);
+				//ed1_x = ((j+1)*DIM);
+				//ed1_y = (i+1) + ((i+1) - i)*rat;
+				//glVertex2f(ed1_x,ed1_y);
 				
-				ed2_x = (j+1)*DIM + (i - (i+1))*rat2;
-				ed2_y = i;
-				glVertex2f(ed2_x,ed2_y);
+				py = wn + (fftw_real)i * wn;
+				px = hn + (fftw_real)(j+1) * hn +rat2;
+				glVertex2f(px,py);
+				//ed2_x = (j+1)*DIM + (i - (i+1))*rat2;
+				//ed2_y = i;
+				//glVertex2f(ed2_x,ed2_y);
 
 				//glEnd();
 				break;
 				
-				case '0010':
-				case '1101':
+				case 0010:
+				case 1101:
 				rat = ((rho[idx3] - rho[idx4]) != 0) ? (idx3*(rho[idx3] -isovalue) + idx4*(isovalue-rho[idx4])) /(rho[idx3] - rho[idx4]) : 0; 
 				rat2 = ((rho[idx3] - rho[idx2]) != 0) ? (idx3*(rho[idx3] -isovalue) + idx2*(isovalue-rho[idx2]) /(rho[idx3] - rho[idx4])) : 0; 
 				//glBegin(GL_LINES);
-				ed1_x = ((j+1)*DIM);
-				ed1_y = (i+1) + rat;
-				glVertex2f(ed1_x,ed1_y);
 				
-				ed2_x = (j+1)*DIM + rat2;
+				py = wn + (fftw_real)(i+1) * wn + rat;
+				px = hn + (fftw_real)(j+1) * hn;
+				glVertex2f(px,py);
+				/*ed1_x = ((j+1)*DIM);
+				ed1_y = (i+1) + rat;
+				glVertex2f(ed1_x,ed1_y);*/
+				
+				py = wn + (fftw_real)i * wn;
+				px = hn + (fftw_real)(j+1) * hn +rat2;
+				glVertex2f(px,py);
+				
+				/*ed2_x = (j+1)*DIM + rat2;
 				ed2_y = i;
-				glVertex2f(ed2_x,ed2_y);
+				glVertex2f(ed2_x,ed2_y);*/
 				//glEnd();
 				break;
 				
-				case '0011':
-				case '1100':
+				case 0011:
+				case 1100:
 				rat = ((rho[idx4] - rho[idx1]) != 0) ? (idx4*(isovalue-rho[idx4]) + idx1*(rho[idx1] - isovalue))/(rho[idx4] - rho[idx1]) : 0; 
 				rat2 = ((rho[idx3] - rho[idx2])  != 0) ? (idx3*(isovalue-rho[idx3]) + idx2*(rho[idx2] -isovalue))/(rho[idx3] - rho[idx2]) : 0; 
+				
 				//glBegin(GL_LINES);
 				
-				ed1_x = (j+1)*DIM - rat;
-				ed1_y = i;
-				glVertex2f(ed1_x,ed1_y);
+				py= wn + (fftw_real)i * wn;
+				px = hn + (fftw_real)(j+1) * hn -rat;
+				glVertex2f(px,py);
 				
-				ed2_x = (j+1)*DIM - rat2;
+				/*ed1_x = (j+1)*DIM - rat;
+				ed1_y = i;
+				glVertex2f(ed1_x,ed1_y);*/
+				
+				py = wn + (fftw_real)(i+1) * wn;
+				px = hn + (fftw_real)(j+1) * hn - rat2;
+				glVertex2f(px,py);
+				
+				/*ed2_x = (j+1)*DIM - rat2;
 				ed2_y = (i+1);
-				glVertex2f(ed2_x,ed2_y);
+				glVertex2f(ed2_x,ed2_y);*/
 				//glEnd();
 				break;
 				
-				case '0100':
-				case '1011':
+				case 0100:
+				case 1011:
 				rat = ((rho[idx2] - rho[idx1]) != 0) ? (idx2*(rho[idx2] -isovalue) + idx1*(isovalue-rho[idx1]) /(rho[idx2] - rho[idx1])) : 0; 
 				rat2 = ((rho[idx2] - rho[idx3]) != 0) ? (idx2*(rho[idx2] -isovalue) + idx3*(isovalue-rho[idx3]) /(rho[idx2] - rho[idx3])) : 0; 
 				//glBegin(GL_LINES);
-				ed1_x = j*DIM;
-				ed1_y = (i+1) - rat;
-				glVertex2f(ed1_x,ed1_y);
+				py = wn + (fftw_real)(i+1) * wn - rat;
+				px = hn + (fftw_real)(j) * hn +rat2;
+				glVertex2f(px,py);
 				
-				ed2_x = (j+1)*DIM - rat2;
+				/*ed1_x = j*DIM;
+				ed1_y = (i+1) - rat;
+				glVertex2f(ed1_x,ed1_y);*/
+				
+				py = wn + (fftw_real)i * wn;
+				px = hn + (fftw_real)(j+1) * hn -rat2;
+				glVertex2f(px,py);
+				
+				/*ed2_x = (j+1)*DIM - rat2;
 				ed2_y = i;
-				glVertex2f(ed2_x,ed2_y);
+				glVertex2f(ed2_x,ed2_y);*/
 				//glEnd();
 				break;
 				
-				case '0101':
+				case 0101:
 				
 				rat = ((rho[idx4] - rho[idx1]) != 0) ? (idx4*(rho[idx4] -isovalue) + idx1*(isovalue-rho[idx1]) /(rho[idx4] - rho[idx1])) : 0; 
 				rat2 = ((rho[idx4] - rho[idx3]) != 0) ? (idx4*(rho[idx4] - isovalue) + idx3*(isovalue - rho[idx3]) / (rho[idx4]- rho[idx3])) : 0;
 				rat3 = ((rho[idx2] - rho[idx3]) != 0) ? (idx2*(rho[idx2] -isovalue) + idx3*(isovalue-rho[idx3]) /(rho[idx2] - rho[idx3])) : 0; 
 				rat4 = ((rho[idx2] - rho[idx1]) != 0) ? (idx2*(rho[idx2] -isovalue) + idx1*(isovalue-rho[idx1]) /(rho[idx2] - rho[idx1])) : 0;
 				//glBegin(GL_LINES);
-				ed1_x = (j+1)*DIM - rat;
+				
+				py = wn + (fftw_real)i * wn;
+				px = hn + (fftw_real)(j+1) * hn -rat;
+				glVertex2f(px,py);
+				
+				/*ed1_x = (j+1)*DIM - rat;
 				ed1_y = i;
-				glVertex2f(ed1_x, ed1_y);
+				glVertex2f(ed1_x, ed1_y);*/
 				
-				ed2_x = (j+1)*DIM;
+				py = wn + (fftw_real)i * wn + rat2;
+				px = hn + (fftw_real)(j+1) * hn;
+				glVertex2f(px,py);
+				
+			/*	ed2_x = (j+1)*DIM;
 				ed2_y = i + rat2;
-				glVertex2f(ed2_x, ed2_y);
+				glVertex2f(ed2_x, ed2_y);*/
 				
+				py = wn + (fftw_real)(i+1) * wn;
+				px = hn + (fftw_real)(j) * hn +rat3;
+				glVertex2f(px,py);
+			/*	
 				ed3_x = j*DIM + rat3;
 				ed3_y = i+1;
-				glVertex2f(ed3_x, ed3_y);
+				glVertex2f(ed3_x, ed3_y);*/
 				
-				ed4_x = j*DIM;
+				py = wn + (fftw_real)(i+1) * wn - rat4;
+				px = hn + (fftw_real)(j) * hn;
+				glVertex2f(px,py);
+				
+				/*ed4_x = j*DIM;
 				ed4_y = (i+1) - rat4;
-				glVertex2f(ed4_x,ed4_y);
+				glVertex2f(ed4_x,ed4_y);*/
 				//glEnd();
 				break;
 				
-				case '0110':
-				case '1001':
+				case 0110:
+				case 1001:
 				rat = ((rho[idx2] - rho[idx1]) != 0) ? (idx2*(rho[idx2] -isovalue) + idx1*(isovalue-rho[idx1]) /(rho[idx2] - rho[idx1])) : 0; 
 				rat2 = ((rho[idx3] - rho[idx4]) != 0) ? (idx3*(rho[idx3] -isovalue) + idx4*(isovalue-rho[idx4]) /(rho[idx3] - rho[idx4])) : 0; 
 				//glBegin(GL_LINES);
-				ed1_x = j*DIM;
+				
+				py = wn + (fftw_real)(i+1) * wn - rat;
+				px = hn + (fftw_real)(j) * hn;
+				glVertex2f(px,py);
+				
+				/*ed1_x = j*DIM;
 				ed1_y = (i+1) - rat;
 				glVertex2f(ed1_x,ed1_y);
+				*/
 				
-				ed2_x = (j+1)*DIM;
+				py = wn + (fftw_real)i * wn + rat2;
+				px = hn + (fftw_real)(j+1) * hn;
+				glVertex2f(px,py);
+				
+				/*ed2_x = (j+1)*DIM;
 				ed2_y = i + rat2;
-				glVertex2f(ed2_x,ed2_y);
+				glVertex2f(ed2_x,ed2_y);*/
 				//glEnd();
 				break;
 				
-				case '0111':
-				case '1000':
+				case 0111:
+				case 1000:
 				rat = ((rho[idx2] - rho[idx1]) != 0) ? (idx2*(rho[idx2] -isovalue) + idx1*(isovalue-rho[idx1]) /(rho[idx2] - rho[idx1])) : 0; 
 				rat2 = ((rho[idx4] - rho[idx1]) != 0) ? (idx4*(rho[idx4] -isovalue) + idx1*(isovalue-rho[idx1]) /(rho[idx4] - rho[idx1])) : 0; 
 				//glBegin(GL_LINES);
+				py = wn + (fftw_real)(i+1) * wn -rat;
+				px = hn + (fftw_real)(j) * hn;
+				glVertex2f(px,py);
+				/*
 				ed1_x = j*DIM;
 				ed1_y = (i+1) - rat;
-				glVertex2f(ed1_x,ed1_y);
+				glVertex2f(ed1_x,ed1_y);*/
 				
-				ed2_x = j*DIM + rat2;
+				py = wn + (fftw_real)i * wn;
+				px = hn + (fftw_real)(j) * hn +rat2;
+				glVertex2f(px,py);
+				
+				/*ed2_x = j*DIM + rat2;
 				ed2_y = i;
-				glVertex2f(ed2_x,ed2_y);
+				glVertex2f(ed2_x,ed2_y);*/
 				//glEnd();
 				break;
 				
-				case '1010':
+				case 1010:
 				rat = ((rho[idx1] - rho[idx2]) != 0) ? (idx1*(rho[idx1] -isovalue) + idx2*(isovalue-rho[idx2]) /(rho[idx1] - rho[idx2])) : 0; 
 				rat2 = ((rho[idx1] - rho[idx4]) != 0) ? (idx1*(rho[idx1] - isovalue) + idx4*(isovalue - rho[idx4]) / (rho[idx1]- rho[idx4])) : 0;
 				rat3 = ((rho[idx3] - rho[idx2]) != 0) ? (idx3*(rho[idx3] -isovalue) + idx2*(isovalue-rho[idx2]) /(rho[idx3] - rho[idx2])) : 0; 
 				rat4 = ((rho[idx3] - rho[idx4]) != 0) ? (idx3*(rho[idx3] -isovalue) + idx4*(isovalue-rho[idx4]) /(rho[idx3] - rho[idx4])) : 0;
 				//glBegin(GL_LINES);
+				py = wn + (fftw_real)i * wn + rat;
+				px = hn + (fftw_real)(j+1) * hn;
+				glVertex2f(px,py);
+				/*
 				ed1_x = (j+1)*DIM;
 				ed1_y = i + rat;
 				glVertex2f(ed1_x, ed1_y);
+				*/
+				py = wn + (fftw_real)i * wn;
+				px = hn + (fftw_real)(j+1) * hn  -rat2;
+				glVertex2f(px,py);
 				
-				ed2_x = (j+1)*DIM - rat2;
+				/*ed2_x = (j+1)*DIM - rat2;
 				ed2_y = i;
-				glVertex2f(ed2_x, ed2_y);
+				glVertex2f(ed2_x, ed2_y);*/
 				
+				py = wn + (fftw_real)(i+1) * wn;
+				px = hn + (fftw_real)(j) * hn +rat3;
+				glVertex2f(px,py);
+				/*
 				ed3_x = j*DIM + rat3;
 				ed3_y = i+1;
-				glVertex2f(ed3_x, ed3_y);
-				
+				glVertex2f(ed3_x, ed3_y);*/
+				py = wn + (fftw_real)(i+1) * wn -rat4;
+				px = hn + (fftw_real)(j+1) * hn;
+				glVertex2f(px,py);
+				/*
 				ed4_x = (j+1)*DIM;
 				ed4_y = (i+1) - rat4;
-				glVertex2f(ed4_x,ed4_y);
+				glVertex2f(ed4_x,ed4_y);*/
 				//glEnd();
 				break;
 				
+				case 1111:
+				py = wn + (fftw_real)(i) * wn;
+				px = hn + (fftw_real)(j) * hn;
+				glVertex2f(px,py);
 				
+				py = wn + (fftw_real)(i+1) * wn;
+				px = hn + (fftw_real)(j) * hn;
+				glVertex2f(px,py);
+				
+				py = wn + (fftw_real)(i) * wn;
+				px = hn + (fftw_real)(j) * hn;
+				glVertex2f(px,py);
+				
+				py = wn + (fftw_real)(i) * wn;
+				px = hn + (fftw_real)(j+1) * hn;
+				glVertex2f(px,py);
+				
+				py = wn + (fftw_real)(i+1) * wn;
+				px = hn + (fftw_real)(j) * hn;
+				glVertex2f(px,py);
+				
+				py = wn + (fftw_real)(i+1) * wn;
+				px = hn + (fftw_real)(j+1) * hn;
+				glVertex2f(px,py);
+				
+				py = wn + (fftw_real)(i) * wn;
+				px = hn + (fftw_real)(j+1) * hn;
+				glVertex2f(px,py);
+				
+				py = wn + (fftw_real)(i+1) * wn;
+				px = hn + (fftw_real)(j+1) * hn;
+				glVertex2f(px,py);
 				}
 		}
 	}

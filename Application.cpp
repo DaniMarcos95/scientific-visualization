@@ -18,7 +18,6 @@ extern int draw_vec_mod;
 extern int draw_for_mod;   
 extern int NCOLORS; 
 extern int diver;        
-const int COLOR_BLACKWHITE = 0;   
 const int COLOR_RAINBOW = 1;
 const int COLOR_GRAYSCALE = 0;
 const int COLOR_BLUEYEL = 2;
@@ -59,7 +58,7 @@ int aux_repetition_scalar = -1;
 int aux_repetition_vector = -1;
 int numberOfSamples = 50;
 float isovalue = 0;
-
+extern int isocodes[50][50];
 //display: Handle window redrawing events. Simply delegates to visualize().
 
 void drawBitmapText(char *string,float x,float y) 
@@ -591,11 +590,11 @@ int main(int argc, char **argv, int NLEVELS)
 	GLUI_RadioButton *vDivergence = new GLUI_RadioButton( radioDivergence, "v" );
 	GLUI_RadioButton *fDivergence = new GLUI_RadioButton( radioDivergence, "f" );
 
-	// GLUI_EditText *isovalueText = new GLUI_EditText(mainPanel, "Number of Samples (Dimension of Square) ", &isovalue);
-	// setNumberOfSamples->set_int_val(0.0);
+	 GLUI_EditText *isovalueText = new GLUI_EditText(mainPanel, "Number of Samples (Dimension of Square) ", &isovalue);
+	 setNumberOfSamples->set_int_val(0.0);
 
-	// GLUI_RadioGroup *radioIsolines = new GLUI_RadioGroup(mainPanel, &isolineselected);
-	// GLUI_RadioButton *buttonIsolines = new GLUI_RadioButton( radioIsolines, "Isolines" );
+	 GLUI_RadioGroup *radioIsolines = new GLUI_RadioGroup(mainPanel, &isolineselected);
+	 GLUI_RadioButton *buttonIsolines = new GLUI_RadioButton( radioIsolines, "Isolines" );
 
 	GLUI_Button *Exit = new GLUI_Button(mainPanel, "Exit", -1, (GLUI_Update_CB)exit);
 
