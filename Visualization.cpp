@@ -26,6 +26,7 @@ int temp_idx;
 const int COLOR_RAINBOW=1;
 const int COLOR_GRAYSCALE=0;
 const int COLOR_BLUEYEL =2;
+const int COLOR_HEATMAP = 3;
 int   scalar_col = 0;           //method for scalar coloring 
 int   frozen = 0;               //toggles on/off the animation 
 void rainbow(float,float*,float*,float*,int color_bar);
@@ -162,15 +163,38 @@ void blue_yel(float value, float* R, float* G, float* B, int color_bar)
 	   		value = (value - min_clamped) / (max_clamped - min_clamped);
 	   	}
    }
-   
-   value = 6*value; //set value to [0,6] range
+   const float dx=0.8;
+   value = (6-2*dx)*value+dx;
+   //value = 6*value; //set value to [0,6] range
     
-   *R = max(0.0,(3-fabs(value-6)));
+   /**R = max(0.0,(3-fabs(value-6)));
    *G = max(0.0,(6-fabs(value-3)-fabs(value-6))/2);
    *B = max(0.0,(3-fabs(value)));
-   
+   */
+	*R = max(0.0,(6-fabs(value-2)-fabs(value-6))/2);
+	*G = max(0.0,(4-fabs(value-2)-fabs(value-4))/2);
+	*B =0;
 }
 
+void heatmap(float value, float* R, float* G, float* B,int color_bar)
+{
+	if(color_bar != 1){
+   		if(scalingClampingIndex == 0){
+	   		if (value<minValue) value=minValue; 
+	   		if (value>maxValue) value=maxValue;
+	   		value = (value - minValue) / (maxValue - minValue);
+	   	}else{
+	   		if (value<min_clamped) value=min_clamped; 
+	   		if (value>max_clamped) value=max_clamped;
+	   		value = (value - min_clamped) / (max_clamped - min_clamped);
+	   	}
+   }
+   value = (6-2*dx)*value+dx;
+   *R = max(0.0,(6-fabs(value-2)-fabs(value-6))/2);
+	*G = max(0.0,(4-fabs(value-2)-fabs(value-4))/2);
+	*B =0;const float dx=0.8;
+   
+}
 void set_colormap( float value, int scalar_col, int NCOLORS, int color_bar)
 {
 	float R,G,B;
@@ -198,10 +222,10 @@ void set_colormap( float value, int scalar_col, int NCOLORS, int color_bar)
 		   
 		   rainbow(value,&R,&G,&B, color_bar);}      
 	   
-	else	//blue-yellow colorbar
-		blue_yel(value,&R,&G,&B, color_bar);
+	else if (scalar_col==2){	//blue-yellow colorbar
+	blue_yel(value,&R,&G,&B, color_bar);}
 	   
-	   
+	else {heatmap(value,&R,&G,&B,color_bar);}
 
 	glColor3f(R,G,B);
 }
@@ -936,6 +960,13 @@ void grayscale_bar(){
 	glEnd();
 }
 
+void heatmap_bar(){
+	glBegin(GL_QUADS);
+	glShadeModel(GL_SMOOTH);
+	glColor3f(0,0,0);
+	glVertex2f(470,0);
+	//glColor3f();
+}
 void compute_codes(){
 	for(int j = 0; j <= DIM-1; ++j)
 		{for(int i = 0; i <= DIM-1; ++i)

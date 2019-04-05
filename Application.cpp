@@ -22,6 +22,7 @@ const int COLOR_BLACKWHITE = 0;
 const int COLOR_RAINBOW = 1;
 const int COLOR_GRAYSCALE = 0;
 const int COLOR_BLUEYEL = 2;
+const int COLOR_HEATMAP = 3;
 extern int   scalar_col;           
 extern int   frozen;
 extern double dt;	
@@ -382,6 +383,8 @@ void display(void)
 		case 2: scalar_col = COLOR_BLUEYEL;
 				color_dir = COLOR_BLUEYEL;
 				break;
+		case 3: scalar_col = COLOR_HEATMAP;
+				color_dir = COLOR_HEATMAP;
 	}
 }
 
@@ -425,7 +428,7 @@ void keyboard(unsigned char key, int x, int y)
 	  case 'y': draw_vecs = 1 - draw_vecs;
 		    if (draw_vecs==0) draw_rho = 1; 
 		    break;
-	  case 'm': scalar_col++; color_dir++; if (scalar_col>COLOR_BLUEYEL && color_dir>3) {scalar_col=COLOR_GRAYSCALE; color_dir =0;} break;
+	  case 'm': scalar_col++; color_dir++; if (scalar_col>COLOR_HEATMAP && color_dir>3) {scalar_col=COLOR_GRAYSCALE; color_dir =0;} break;
 	  case 'a': frozen = 1-frozen; break;
 	  case 'q': exit(0);
 	}
@@ -559,6 +562,7 @@ int main(int argc, char **argv, int NLEVELS)
 	GLUI_RadioButton *buttonGrayScale = new GLUI_RadioButton( radioColorMap, "GrayScale" );
 	GLUI_RadioButton *buttonRainbow = new GLUI_RadioButton( radioColorMap, "Rainbow" );
 	GLUI_RadioButton *buttonBlueToYellow = new GLUI_RadioButton( radioColorMap, "Blue To Yellow" );
+	GLUI_RadioButton *buttonHeatmap = new GLUI_RadioButton( radioColorMap, "Heatmap" );
 
 	GLUI_Panel *scalingPanel = new GLUI_Panel(panel1, "Scaling/Clamping");
 
